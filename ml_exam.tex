@@ -258,7 +258,7 @@ Hyperparameters are external configurations set before training begins and contr
 
 In summary, parameters are learned by the model, while hyperparameters are predefined settings that influence how the model learns.
 
-\section{Q2.5 Write an \( L^2 \)-regularized minibatch SGD algorithm for training a linear regression model, including the explicit formulas (i.e, formulas you would need to code it with \texttt{numpy}c) of the loss function and its gradient. [10]}
+\section{Q2.5 Write an \( L^2 \)-regularized minibatch SGD algorithm for training a linear regression model, including the explicit formulas (i.e, formulas you would need to code it with \texttt{numpy}) of the loss function and its gradient. [10]}
 The loss function for \( L^2 \)-regularized linear regression is given by:
 \[
 E(w) = \frac{1}{2} \mathbb{E}_{(x,t)\sim p_{\text{data}}} [(x^T w - t)^2] + \frac{\lambda}{2} \|w\|^2
@@ -485,7 +485,7 @@ since \( \sum_x P(x) = 1 \) and \( \sum_x Q(x) = 1 \). The inequality is strict 
 
 \section{Q3.4 Explain the notion of likelihood in machine learning. What likelihood are we estimating, and why do we do it? [10]}
 
-Likelihood in the context of maximum likelihood estimation (MLE) is a function that measures the probability of observing the given data under different parameter values of a statistical model. For a set of independent and identically distributed (i.i.d) data points \( X = \{x_1, x_2, \ldots, x_N\} \), the likelihood of a parameter \( w \) is defined as:
+Likelihood in the context of maximum likelihood estimation (MLE) is a function that measures the probability of observing the given data under different parameter values of a statistical model. For a set of independent and identically distributed (i.i.d.) data points \( X = \{x_1, x_2, \ldots, x_N\} \), the likelihood of a parameter \( w \) is defined as:
 
 \[
 L(w) = \prod_{i=1}^{N} P_{\text{model}}(x_i; w)
@@ -3303,7 +3303,44 @@ Given two trained models and a test set $\{ (x_1, t_1), \ldots, (x_N, t_N) \}$, 
 (The calculation of the p-value is not exactly as I say here, because the algorithm actually returns $\beta$)
 
 \section{Q12.9 Explain why the paired bootstrap test does not produce a true p-value, even though it can be useful for model comparison. What is the fundamental difference between the distribution obtained through bootstrap resampling and the distribution required for proper hypothesis testing? [10]}
-TODO
+
+The paired bootstrap test does not produce a true p-value because of a fundamental mismatch between the distribution it estimates and the distribution required for valid hypothesis testing.
+
+\subsection*{The Core Problem}
+
+In proper statistical hypothesis testing, the p-value is defined as the probability of observing a test statistic at least as extreme as the one computed from the data, \textbf{assuming the null hypothesis is true}. This requires knowing (or estimating) the distribution of the test statistic \textbf{under the null hypothesis} $H_0$.
+
+However, the paired bootstrap test estimates the distribution of the performance difference by resampling from the \textbf{original (true) data distribution}, not from a distribution where the null hypothesis holds. Specifically:
+
+\begin{itemize}
+    \item \textbf{Bootstrap distribution:} The bootstrap resampling procedure generates samples from the empirical distribution of the observed data. This distribution reflects the \emph{actual} performance difference between the two models.
+    \item \textbf{Required distribution for p-value:} A valid p-value requires the distribution of the test statistic under $H_0$ (i.e., assuming no difference between the models, or that any observed difference is due to random chance).
+\end{itemize}
+
+\subsection*{Why This Matters}
+
+The null hypothesis typically states that the two models perform equally well. Under $H_0$, we would expect the distribution of performance differences to be centered around zero. However, the bootstrap procedure samples from the observed data, which already contains the true (potentially non-zero) performance difference between the models.
+
+As a result, the ``p-value'' computed from the paired bootstrap test is not calibrated correctly:
+\begin{itemize}
+    \item It estimates the probability of observing a certain difference given the \emph{true underlying distribution}, not given that $H_0$ is true.
+    \item The bootstrap distribution is centered around the \emph{observed} difference, not around zero (as required under $H_0$).
+\end{itemize}
+
+\subsection*{Contrast with Permutation Test}
+
+The random permutation test, by contrast, \emph{does} produce a valid p-value. By randomly permuting the model predictions (swapping which prediction came from which model), it simulates the distribution of the test statistic under the null hypothesis that the two models are exchangeable (i.e., equally good). This gives a proper reference distribution for computing the p-value.
+
+\subsection*{Practical Usefulness}
+
+Despite not producing a true p-value, the paired bootstrap test can still be useful for:
+\begin{itemize}
+    \item Estimating confidence intervals for the performance difference.
+    \item Getting a rough sense of the variability in model comparison.
+    \item Quick exploratory analysis when exact p-values are not critical.
+\end{itemize}
+
+However, for rigorous statistical claims about model superiority, the permutation test or other methods that properly estimate the null distribution should be preferred.
 
 \part{Lecture 13}
 
