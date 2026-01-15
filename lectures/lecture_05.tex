@@ -1,0 +1,404 @@
+\part{Lecture 5}
+
+\section{Q5.1 Considering a single-layer MLP with $D$ input neurons, a ReLU hidden layer with $H$ units and a softmax output layer with $K$ units, write down the explicit formulas (i.e., formulas you would use to code it in \texttt{numpy}) for the forward pass through the MLP. [10]}
+
+Assuming an MLP with \( D \) input neurons, a ReLU hidden layer with \( H \) units, and a softmax output layer with \( K \) units, we compute the gradients of the loss \( L \) with respect to the weight matrices \( W^{(h)}, W^{(y)} \) and bias vectors \( b^{(h)}, b^{(y)} \) given an input \( x \), a target \( t \), and using the negative log likelihood loss.
+
+Let \( x \in \mathbb{R}^D \) be the input vector, \( h \in \mathbb{R}^H \) be the output of the hidden layer, and \( y \in \mathbb{R}^K \) be the output of the network. The negative log likelihood loss for a correct class \( c \) is given by \( L = -\log(y_c) = -\log(p(C | x))\).
+
+\subsection*{Forward Pass:}
+\begin{align*}
+h^{(in)} &= x^T W^{(h)} + b^{(h)} \\
+h &= \text{ReLU}(h^{(in)}) \\
+y^{(in)} &= h^T W^{(y)} + b^{(y)} \\
+y &= \text{softmax}(y^{(in)})
+\end{align*}
+
+\section{Q5.2 Compute the partial derivative of $-\log \operatorname{softmax}(\boldsymbol{z})$ with respect to $\boldsymbol{z}$. Explain how this computation is used when training MLP. [20]}
+\[
+\frac{\partial}{\partial z_t}\Bigl(-\log \operatorname{softmax}(\boldsymbol z)_t\Bigr)
+=
+\frac{\partial}{\partial z_t}\left(-\log\frac{\exp z_t}{\sum_{j}\exp z_j}\right)
+\]
+\[
+=
+\frac{\partial}{\partial z_t}\left(-\log\exp z_t+\log\sum_{j}\exp z_j\right)
+\]
+\[
+=
+-\mathbf{1}_t + \frac{\exp(z_t)}{\sum_{j}\exp(z_j)}
+=
+\operatorname{softmax}(\boldsymbol z)_t-\mathbf{1}_t.
+\]
+
+\subsection*{How this derivative is used when training an MLP (backprop intuition)}
+
+Assume the output layer of the MLP produces logits $\boldsymbol z\in\mathbb{R}^K$ and probabilities
+\[
+\boldsymbol y=\mathrm{softmax}(\boldsymbol z), \qquad y_k = \frac{e^{z_k}}{\sum_j e^{z_j}}.
+\]
+With a one-hot target $\boldsymbol t$ (true class $t$), the negative log-likelihood loss is
+\[
+L = -\log y_t.
+\]
+The key result used in training is the gradient w.r.t.\ logits (the ``pre-activation'' of the output layer):
+\[
+\boxed{\ \frac{\partial L}{\partial z_k} = y_k - t_k\ }
+\]
+(in particular, $\frac{\partial L}{\partial z_t}=y_t-1$ and for $k\neq t$, $\frac{\partial L}{\partial z_k}=y_k$).
+This is exactly the error signal that starts the backward pass through the computation graph. 
+
+\paragraph{Intuition: boost the correct class, suppress the others.}
+During gradient descent, we update $z_k \leftarrow z_k - \alpha\,\frac{\partial L}{\partial z_k}$:
+\begin{itemize}
+  \item For the correct class $t$: $\frac{\partial L}{\partial z_t}=y_t-1<0$ (unless $y_t=1$), so
+  \[
+  z_t \leftarrow z_t - \alpha(y_t-1) = z_t + \alpha(1-y_t),
+  \]
+  i.e., we \emph{increase} the logit of the correct class.
+  \item For each wrong class $k\neq t$: $\frac{\partial L}{\partial z_k}=y_k>0$, so
+  \[
+  z_k \leftarrow z_k - \alpha y_k,
+  \]
+  i.e., we \emph{decrease} logits of incorrect classes.
+\end{itemize}
+Moreover, the suppression is \emph{proportional to the current prediction}: wrong classes that the model assigns larger
+probability ($y_k$ large) are pushed down more strongly. This matches the intuition that training ``flips'' the correct class
+up and pushes competing classes down according to how much they are predicted.
+
+\paragraph{How it plugs into backpropagation in the MLP.}
+Let the last affine layer be
+\[
+\boldsymbol z = (W^{(y)})^\top \boldsymbol h + \boldsymbol b^{(y)},
+\]
+where $\boldsymbol h$ are hidden activations. Define the output-layer error
+\[
+\boldsymbol\delta^{(y)} \;\stackrel{\mathrm{def}}{=}\; \frac{\partial L}{\partial \boldsymbol z} = \boldsymbol y - \boldsymbol t.
+\]
+Then the gradients of the output-layer parameters are
+\[
+\frac{\partial L}{\partial W^{(y)}} = \boldsymbol h\,(\boldsymbol\delta^{(y)})^\top,
+\qquad
+\frac{\partial L}{\partial \boldsymbol b^{(y)}} = \boldsymbol\delta^{(y)},
+\]
+and the error is propagated to the hidden layer via
+\[
+\frac{\partial L}{\partial \boldsymbol h} = W^{(y)} \boldsymbol\delta^{(y)}.
+\]
+From there, backprop continues through the hidden activation $f$ (e.g.\ ReLU) and earlier affine layers to obtain
+$\partial L/\partial W^{(h)}$ and $\partial L/\partial \boldsymbol b^{(h)}$.
+
+\section*{[OUTDATED] Considering a single-layer MLP with $D$ input neurons, a ReLU hidden layer with $H$ units and a softmax output layer with $K$ units, write down the explicit formulas of the gradient of all the MLP parameters (two weight matrices and two bias vectors), assuming input $x$, target $t$, and negative log likelihood loss. [20]}
+{\color{gray}
+Assuming an MLP with \( D \) input neurons, a ReLU hidden layer with \( H \) units, and a softmax output layer with \( K \) units, we compute the gradients of the loss \( L \) with respect to the weight matrices \( W^{(h)}, W^{(y)} \) and bias vectors \( b^{(h)}, b^{(y)} \) given an input \( x \), a target \( t \), and using the negative log likelihood loss.
+
+Let \( x \in \mathbb{R}^D \) be the input vector, \( h \in \mathbb{R}^H \) be the output of the hidden layer, and \( y \in \mathbb{R}^K \) be the output of the network. The negative log likelihood loss for a correct class \( c \) is given by \( L = -\log(y_c) = -\log(p(C | x))\).
+
+\subsection*{Forward Pass:}
+\begin{align*}
+h^{(in)} &= x^T W^{(h)} + b^{(h)} \\
+h &= \text{ReLU}(h^{(in)}) \\
+y^{(in)} &= h^T W^{(y)} + b^{(y)} \\
+y &= \text{softmax}(y^{(in)})
+\end{align*}
+
+\subsection*{Backward Pass (Gradients):}
+\begin{align*}
+\frac{\partial L}{\partial y_k} &= -\frac{t_k}{y_k} \\
+\frac{\partial L}{\partial \mathbf{y}^{(in)}} &= \mathbf{y} - \mathbf{t} \quad \text{(since } \sum_k t_k = 1 \text{)} \\
+\frac{\partial L}{\partial \mathbf{W}^{(y)}} &= \mathbf{h} \left(\frac{\partial L}{\partial \mathbf{y}^{(in)}}\right)^\top \\
+\frac{\partial L}{\partial \mathbf{b}^{(y)}} &= \frac{\partial L}{\partial \mathbf{y}^{(in)}} \\
+\frac{\partial L}{\partial \mathbf{h}} &= \mathbf{W}^{(y)} \frac{\partial L}{\partial \mathbf{y}^{(in)}}^\top \\
+\frac{\partial L}{\partial \mathbf{h}^{(in)}} &= \begin{cases}
+\frac{\partial L}{\partial \mathbf{h}} & \text{if } \mathbf{h}^{(in)} > 0 \\
+0 & \text{otherwise}
+\end{cases} \quad \text{(ReLU gradient)} \\
+\frac{\partial L}{\partial \mathbf{W}^{(h)}} &= \mathbf{x} \left(\frac{\partial L}{\partial \mathbf{h}^{(in)}}\right)^\top \\
+\frac{\partial L}{\partial \mathbf{b}^{(h)}} &= \frac{\partial L}{\partial \mathbf{h}^{(in)}}
+\end{align*}
+
+\subsection*{Gradient of Loss with respect to Output Probabilities \( \mathbf{y} \)}
+\begin{equation*}
+\frac{\partial L}{\partial \mathbf{y}} = - \frac{\mathbf{t}}{\mathbf{y}}
+\end{equation*}
+
+\subsection*{Gradient of Output Probabilities with respect to Logits \( \mathbf{y}^{(\text{in})} \)}
+The softmax function for a class \( k \) is given by \( y_k = \frac{e^{y^{(\text{in})}_k}}{\sum_j e^{y^{(\text{in})}_j}} \). Its derivative with respect to the logits \( y^{(\text{in})}_i \) is:
+\begin{align*}
+\frac{\partial y_k}{\partial y^{(\text{in})}_i} &= \begin{cases}
+y_k (1 - y_i) & \text{if } i = k, \\
+-y_k y_i & \text{if } i \neq k.
+\end{cases}
+\end{align*}
+
+\subsection*{Chain Rule Application for Loss Gradient with respect to Logits}
+\begin{align*}
+\frac{\partial L}{\partial y^{(\text{in})}_i} &= \sum_k \frac{\partial L}{\partial y_k} \frac{\partial y_k}{\partial y^{(\text{in})}_i} \\
+&= \frac{\partial L}{\partial y_i} \frac{\partial y_i}{\partial y^{(\text{in})}_i} + \sum_{k \neq i} \frac{\partial L}{\partial y_k} \frac{\partial y_k}{\partial y^{(\text{in})}_i} \\
+&= -\frac{t_i}{y_i} y_i (1 - y_i) - \sum_{k \neq i} \frac{t_k}{y_k} (-y_k y_i) \\
+&= -t_i + t_i y_i + \sum_{k \neq i} t_k y_i \\
+&= -t_i + y_i \left(t_i + \sum_{k \neq i} t_k\right) \\
+&= -t_i + y_i \sum_k t_k \\
+&= y_i - t_i \quad \text{(since \( \sum_k t_k = 1 \) for one-hot encoded targets)}
+\end{align*}
+
+\subsection*{Gradient of Loss with respect to Output Layer Weights \( \mathbf{W}^{(y)} \)}
+\begin{align*}
+\frac{\partial L}{\partial \mathbf{W}^{(y)}} &= \frac{\partial L}{\partial \mathbf{y}^{(\text{in})}} \frac{\partial \mathbf{y}^{(\text{in})}}{\partial \mathbf{W}^{(y)}} \\
+&= \left( \mathbf{y} - \mathbf{t} \right)^\top \mathbf{h}
+\end{align*}
+
+\subsection*{Gradient of Loss with respect to Output Layer Biases \( \mathbf{b}^{(y)} \)}
+\begin{equation*}
+\frac{\partial L}{\partial \mathbf{b}^{(y)}} = \mathbf{y} - \mathbf{t}
+\end{equation*}
+
+\subsection*{Gradient of Loss with respect to Hidden Layer Outputs \( \mathbf{h} \)}
+\begin{equation*}
+\frac{\partial L}{\partial \mathbf{h}} = \mathbf{W}^{(y)} \left( \mathbf{y} - \mathbf{t} \right)
+\end{equation*}
+
+\subsection*{Gradient of Loss with respect to Hidden Layer Pre-Activation \( \mathbf{h}^{(\text{in})} \)}
+\begin{equation*}
+\frac{\partial L}{\partial \mathbf{h}^{(\text{in})}} = \frac{\partial L}{\partial \mathbf{h}} \cdot \mathbb{I}(\mathbf{h}^{(\text{in})} > 0)
+\end{equation*}
+where \( \mathbb{I} \) is the indicator function, yielding 1 for elements where the condition is true and 0 otherwise, which corresponds to the derivative of the ReLU activation function.
+
+\subsection*{Gradient of Loss with respect to Hidden Layer Weights \( \mathbf{W}^{(h)} \)}
+\begin{align*}
+\frac{\partial L}{\partial \mathbf{W}^{(h)}} &= \mathbf{x}^\top \frac{\partial L}{\partial \mathbf{h}^{(\text{in})}}
+\end{align*}
+
+\subsection*{Gradient of Loss with respect to Hidden Layer Biases \( \mathbf{b}^{(h)} \)}
+\begin{equation*}
+\frac{\partial L}{\partial \mathbf{b}^{(h)}} = \frac{\partial L}{\partial \mathbf{h}^{(\text{in})}}
+\end{equation*}
+
+\subsection*{Update Rules:}
+\begin{align*}
+W^{(h)} &= W^{(h)} - \alpha \frac{\partial L}{\partial W^{(h)}} \\
+b^{(h)} &= b^{(h)} - \alpha \frac{\partial L}{\partial b^{(h)}} \\
+W^{(y)} &= W^{(y)} - \alpha \frac{\partial L}{\partial W^{(y)}} \\
+b^{(y)} &= b^{(y)} - \alpha \frac{\partial L}{\partial b^{(y)}}
+\end{align*}
+
+In these equations, \( \alpha \) represents the learning rate, and the derivatives with respect to \( h^{(in)} \) take into account the ReLU activation, which is zero for negative inputs and equal to the derivative of the loss with respect to \( h \) otherwise. The derivative with respect to \( y^{(in)} \) is computed as the difference between the output probabilities \( y \) and the one-hot encoded target vector \( t \).
+}
+\section{Q5.3 Formulate the computation of MLP as a computation graph. Explain how such a graph can be used to compute the gradients of the parameters in the back-propagation algorithm. [10]}
+
+A Multi-Layer Perceptron (MLP) is a feedforward neural network that consists of an input layer, one or more hidden layers, and an output layer. The MLP processes an input through each layer by applying a series of transformations, including weighted sums and activation functions.
+
+We can represent the computation performed by the MLP as a computation graph, where each node represents a variable or an operation, and edges represent dependencies between them.
+
+Let's assume an MLP with one hidden layer for simplicity, though this extends to more layers. The forward pass involves the following steps:
+
+\begin{enumerate}
+    \item Input to the first layer
+    \item Activation function
+    \item Input to the output layer
+    \item Output layer activation (optional)
+\end{enumerate}
+
+The computation graph for this MLP can be visualized as a directed acyclic graph (DAG), where:
+
+Nodes: Represent operations (like matrix multiplication, addition, activation functions) and variables (like weights, biases, activations).
+Edges: Represent dependencies between operations, such as the flow of data between layers or the relationship between weights and activations.
+Here's a simplified view of the graph:
+
+Input x ----> (W1 * x + b1) ----> Activation f ----> (W2 * a1 + b2) ----> Output y
+
+Not really sure how to explain the backpropagation part, basically you compute the gradients of the loss with respect to the parameters by applying the chain rule in reverse order through the graph. The gradients are computed layer by layer, starting from the output layer and moving backward to the input layer. The chain rule allows us to compute the gradients of the loss with respect to each parameter by multiplying the gradients of the loss with respect to the output of each node in the graph.
+
+\section{Q5.4 Explain the concept of dropout as a regularization technique for MLPs. How does it work during training versus at test time, and what is the intuition behind why it improves generalization? [10]}
+\paragraph{Concept.}
+\emph{Dropout} is a stochastic regularization method for multilayer perceptrons (MLPs) in which, during training, individual hidden units are randomly ``dropped'' (set to zero) with some probability. This reduces effective model capacity on each update and helps prevent overfitting.
+
+\paragraph{How it works during training.}
+Let $h \in \mathbb{R}^H$ be the activation vector of a hidden layer. Sample an elementwise mask
+\[
+m \sim \mathrm{Bernoulli}(p_{\text{keep}})^H,
+\]
+and apply it:
+\[
+\tilde{h} = m \odot h,
+\]
+where $\odot$ denotes elementwise multiplication. Each mini-batch (or even each example) sees a different ``thinned'' network, so training effectively optimizes an ensemble of many subnetworks that share weights.
+
+\paragraph{How it works at test time.}
+At test time, dropout is disabled: we use the full network (no units dropped). 
+
+\paragraph{Intuition for improved generalization.}
+Dropout improves generalization primarily by reducing variance and discouraging over-reliance on specific pathways:
+\begin{itemize}
+  \item \textbf{Prevents co-adaptation:} neurons cannot rely on a fixed set of other neurons being present, so features must be useful in many contexts.
+  \item \textbf{Robust, distributed representations:} information must be represented redundantly because any unit may be missing during training.
+  \item \textbf{Approximate model averaging:} training with many random masks is akin to training a large ensemble of subnetworks and averaging them at test time, which typically generalizes better than a single overfit model.
+\end{itemize}
+
+\section{Q5.5 Formulate Universal Approximation Theorem ('89) and explain in words what it says about multi-layer perceptron. [10]}
+
+Let \(\phi(x) : \mathbb{R} \rightarrow \mathbb{R}\) be a nonconstant, bounded and nondecreasing continuous function (later also shown for \(\phi=\mathrm{ReLU}\), and more generally for many nonpolynomial activations).
+
+For any \(\epsilon > 0\) and any continuous function \(f : [0, 1]^D \rightarrow \mathbb{R}\), there exists \(H \in \mathbb{N}\), \(\mathbf{v} \in \mathbb{R}^H\), \(\mathbf{b} \in \mathbb{R}^H\), and \(\mathbf{W} \in \mathbb{R}^{D \times H}\) such that, defining the (one-hidden-layer) MLP
+\[
+F(\mathbf{x}) = \mathbf{v}^T \phi(\mathbf{W}^T \mathbf{x} + \mathbf{b})
+= \sum_{i=1}^{H} v_i \,\phi(\mathbf{x}^T \mathbf{W}_{*,i} + b_i),
+\]
+(where \(\phi\) is applied elementwise), we have for all \(\mathbf{x} \in [0,1]^D\):
+\[
+\left|F(\mathbf{x}) - f(\mathbf{x})\right| < \epsilon.
+\]
+
+\paragraph{What it says (in words).}
+The theorem states that a \textbf{single-hidden-layer} MLP with a suitable nonlinearity is a \textbf{universal function approximator}: by using \emph{enough} hidden units \(H\), it can approximate \emph{any} continuous function on a compact domain (here \([0,1]^D\)) arbitrarily well (to within any tolerance \(\epsilon\)).
+
+\paragraph{Why we use it / why it matters.}
+\begin{itemize}
+  \item \textbf{Expressive power guarantee:} it provides a theoretical justification that MLPs are not fundamentally limited in what mappings they can represent; in principle, they can represent very complex input--output relationships.
+  \item \textbf{Existence, not construction:} it is an \emph{existence} result---it guarantees that some parameters \((\mathbf{W},\mathbf{b},\mathbf{v})\) exist, but it does \emph{not} guarantee that gradient-based training will find them, nor that the required \(H\) is practically small.
+  \item \textbf{No generalization guarantee:} approximating \(f\) on the domain does not automatically imply good performance on finite data; regularization, architecture choices, and data still determine generalization.
+\end{itemize}
+
+\paragraph{Intuition behind the formula.}
+The representation
+\[
+F(\mathbf{x})=\sum_{i=1}^{H} v_i\,\phi(\mathbf{x}^T \mathbf{W}_{*,i}+b_i)
+\]
+can be viewed as a \textbf{linear combination of many nonlinear basis functions}. Each hidden unit implements a nonlinear feature \(\phi(\mathbf{x}^T \mathbf{W}_{*,i}+b_i)\); by scaling and summing enough such features (choosing \(H\) large enough), the network can ``tile'' the input space and shape the output to match \(f\) up to error \(\epsilon\).
+
+
+\section{Q5.6 How do we search for a minimum of a function $f(\mathbf{x}) : \mathbb{R}^D \rightarrow \mathbb{R}$ subject to equality constraints $g_1(\mathbf{x}) = 0, \ldots, g_m(\mathbf{x}) = 0$? [10]}
+
+We search for a minimum of a function $f(\mathbf{x}) : \mathbb{R}^D \rightarrow \mathbb{R}$ subject to equality constraints $g_1(\mathbf{x}) = 0, \ldots, g_m(\mathbf{x}) = 0$ using the method of Lagrange multipliers. This involves finding a point $\mathbf{x} \in \mathbb{R}^D$ and a set of multipliers $\lambda_1, \ldots, \lambda_m \in \mathbb{R}$ such that the gradient of the Lagrangian function $\mathcal{L}(\mathbf{x}, \mathbf{\lambda})$ with respect to both $\mathbf{x}$ and $\mathbf{\lambda}$ is zero.
+
+The Lagrangian is defined as:
+\[
+\mathcal{L}(\mathbf{x}, \mathbf{\lambda}) = f(\mathbf{x}) - \sum_{i=1}^{m} \lambda_i g_i(\mathbf{x}),
+\]
+where $\nabla_{\mathbf{x}}\mathcal{L}(\mathbf{x}, \mathbf{\lambda}) = 0$ and $\nabla_{\mathbf{\lambda}}\mathcal{L}(\mathbf{x}, \mathbf{\lambda}) = 0$. This gives us a system of equations which, when solved, gives the points $\mathbf{x}$ that minimize $f(\mathbf{x})$ subject to the constraints.
+
+
+\section{Q5.7 Prove which categorical distribution with $N$ classes has maximum entropy. [10]}
+
+We want to find a categorical distribution \( \mathbf{p} = (p_1, \ldots, p_N) \) that maximizes entropy, subject to the constraints:
+
+\begin{itemize}
+    \item \( p_i \geq 0 \) for all \( i \),
+    \item \( \sum_{i=1}^{N} p_i = 1 \).
+\end{itemize}
+
+The entropy \( H(\mathbf{p}) \) for a categorical distribution is given by:
+
+\[ H(\mathbf{p}) = -\sum_{i=1}^{N} p_i \log(p_i) \]
+
+We form the Lagrangian \( \mathcal{L} \) to include the equality constraint:
+
+\[ \mathcal{L}(\mathbf{p}, \lambda) = -\sum_{i=1}^{N} p_i \log(p_i) + \lambda \left( \sum_{i=1}^{N} p_i - 1 \right) \]
+
+Taking the derivative of \( \mathcal{L} \) with respect to \( p_i \) and setting it to zero:
+
+\[ 0 = \frac{\partial \mathcal{L}}{\partial p_i} = -\log(p_i) - 1 + \lambda \]
+
+Solving for \( p_i \), we get:
+
+\[ p_i = e^{\lambda - 1} \]
+
+Since all \( p_i \) must satisfy the equality constraint \( \sum_{i=1}^{N} p_i = 1 \), substituting \( p_i \) gives:
+
+\[ \sum_{i=1}^{N} e^{\lambda - 1} = 1 \]
+
+\[ N e^{\lambda - 1} = 1 \]
+
+\[ e^{\lambda - 1} = \frac{1}{N} \]
+
+\[ p_i = \frac{1}{N} \]
+
+Therefore, each \( p_i \) is \( \frac{1}{N} \), indicating that the distribution with maximum entropy is the uniform distribution.
+
+\section{Q5.8 Consider derivation of softmax using maximum entropy principle, assuming we have a dataset of $N$ examples $(x_i,t_i)$, $x_i \in \mathbb{R}^D$, $t_i \in \{1,2,\ldots,K\}$. Formulate the three conditions we impose on the searched $\pi:\mathbb{R}^D \rightarrow \mathbb{R}^K$, and write down the Lagrangian to be minimized. [20]}
+
+Given a dataset of $N$ examples $(x_i, t_i)$ where $x_i \in \mathbb{R}^D$ and $t_i \in \{1, 2, \ldots, K\}$, we want to derive a softmax function using the maximum entropy principle. The softmax function $\pi(x)$ must satisfy the following conditions:
+
+\begin{enumerate}
+    \item For all $x \in \mathbb{R}^D$ and each class $k$, the predicted probability $\pi(x)_k \geq 0$.
+    \item For each input $x$, the probabilities must sum up to 1: $\sum_{k=1}^K \pi(x)_k = 1$.
+    \item The expected value of the predicted distribution should match the empirical distribution: $\frac{1}{N} \sum_{i=1}^N \pi(x_i)_k = \frac{1}{N} \sum_{i=1}^N [t_i = k]$ for each class $k$.
+\end{enumerate}
+
+The Lagrangian $\mathcal{L}$, incorporating these constraints with Lagrange multipliers $\lambda$ and $\mu_k$.
+
+We want to minimize $-\sum_{i=1}^{N} H(\pi(x_i))$ given
+\begin{itemize}
+    \item for $1 \leq i \leq N$, $1 \leq k \leq K$: $\pi(x_i)_k \geq 0$,
+    \item for $1 \leq i \leq N$: $\sum_{k=1}^{K} \pi(x_i)_k = 1$,
+    \item for $1 \leq j \leq D$, $1 \leq k \leq K$: $\sum_{i=1}^{N} \pi(x_i)_k x_{i,j} = \sum_{i=1}^{N} [t_i = k] x_{i,j}$.
+\end{itemize}
+
+We therefore form a Lagrangian (ignoring the first inequality constraint):
+\[
+\mathcal{L} = \sum_{i=1}^{N} \sum_{k=1}^{K} \pi(x_i)_k \log(\pi(x_i)_k) 
+- \sum_{j=1}^{D} \sum_{k=1}^{K} \lambda_{j,k} \left( \sum_{i=1}^{N} \pi(x_i)_k x_{i,j} - [t_i = k] x_{i,j} \right) 
+- \sum_{i=1}^{N} \beta_i \left( \sum_{k=1}^{K} \pi(x_i)_k - 1 \right).
+\]
+
+
+\section{Q5.9 Define precision (including true positives and others), recall, $F_1$ score, and $F_\beta$ score (we stated several formulations for $F_1$ and $F_\beta$ scores; any one of them will do). [10]}
+
+The confusion matrix is a table used to describe the performance of a classification model:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|l|l}
+& \textbf{Predicted Positive} & \textbf{Predicted Negative} \\ \hline
+\textbf{Actual Positive} & True Positives (TP) & False Negatives (FN) \\ \hline
+\textbf{Actual Negative} & False Positives (FP) & True Negatives (TN) \\
+\end{tabular}
+\caption{Confusion Matrix}
+\label{table:confusion_matrix}
+\end{table}
+
+Precision quantifies the number of correct positive predictions made. It is defined as:
+\[ \text{Precision} = \frac{\text{True Positives (TP)}}{\text{TP} + \text{False Positives (FP)}} \]
+
+Recall measures the proportion of actual positives correctly identified. It is defined as:
+\[ \text{Recall} = \frac{\text{TP}}{\text{TP} + \text{False Negatives (FN)}} \]
+
+The \( F_1 \) score is the harmonic mean of precision and recall. It is defined as:
+\[ F_1 = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}} \]
+
+The \( F_{\beta} \) score generalizes the \( F_1 \) score by weighing recall more heavily than precision. It is defined as:
+\[ F_{\beta} = (1 + \beta^2) \times \frac{\text{Precision} \times \text{Recall}}{(\beta^2 \times \text{Precision}) + \text{Recall}} \]
+
+\section{Q5.10 Explain the difference between micro-averaged and macro-averaged $F_1$ scores. Under what circumstances do we use them? [10]}
+\paragraph{Macro-averaged $F_1$.}
+Compute the $F_1$ score \emph{separately for each class} (one-vs-rest) and then average:
+\[
+F_1^{\text{macro}}=\frac{1}{C}\sum_{c=1}^{C} F_{1,c}.
+\]
+Each class has \emph{equal weight}, so rare classes influence the score as much as frequent ones. Use it when performance on minority classes matters and you want a class-balanced view.
+
+\paragraph{Micro-averaged $F_1$.}
+Aggregate contributions over \emph{all} classes first (sum TP/FP/FN across classes), then compute $F_1$:
+\[
+P^{\text{micro}}=\frac{\sum_c \mathrm{TP}_c}{\sum_c (\mathrm{TP}_c+\mathrm{FP}_c)},\quad
+R^{\text{micro}}=\frac{\sum_c \mathrm{TP}_c}{\sum_c (\mathrm{TP}_c+\mathrm{FN}_c)},\quad
+F_1^{\text{micro}}=\frac{2P^{\text{micro}}R^{\text{micro}}}{P^{\text{micro}}+R^{\text{micro}}}.
+\]
+This effectively weights classes by their support (number of examples), so majority classes dominate. Use it when overall instance-level performance is the priority, especially under strong class imbalance.
+
+
+\section{Q5.11 Explain (using examples) why accuracy is not a suitable metric for unbalanced target classes, e.g., for a diagnostic test for a contagious disease. [5]}
+
+Accuracy is defined as the ratio of correctly predicted observations to the total observations. In the context of unbalanced datasets, particularly in disease diagnosis where the disease prevalence is low, a model might predict "no disease" for all patients and still achieve high accuracy. For example:
+
+\[
+\text{Accuracy} = \frac{\text{True Positives} + \text{True Negatives}}{\text{Total Observations}}
+\]
+
+Consider a dataset with 1000 individuals where only 10 have the disease. A model that predicts "no disease" for everyone would have an accuracy of:
+
+\[
+\frac{0 + 990}{10 + 990} = \frac{990}{1000} = 99\%
+\]
+
+Despite the high accuracy, the model fails to detect any true disease cases, demonstrating the inadequacy of accuracy as a performance metric in such scenarios. It is more informative to look at metrics such as precision, recall, and the \( F_1 \) score in cases of class imbalance.

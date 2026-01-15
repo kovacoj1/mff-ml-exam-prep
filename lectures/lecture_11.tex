@@ -1,0 +1,222 @@
+\part{Lecture 11}
+
+\section{Q11.1 Formulate SVD decomposition of matrix $X$, describe properties of individual parts of the decomposition. Explain what the reduced version of SVD is. [10]}
+
+Given a matrix \( X \in \mathbb{R}^{m \times n} \), the singular value decomposition (SVD) of \( X \) is a factorization of the form:
+
+\[
+X = U\Sigma V^T
+\]
+
+where:
+
+\begin{itemize}
+  \item \( U \in \mathbb{R}^{m \times m} \) is an orthogonal matrix whose columns are the left singular vectors of \( X \),
+  \item \( \Sigma \in \mathbb{R}^{m \times n} \) is a diagonal matrix with non-negative real numbers on the diagonal known as singular values, sorted in descending order,
+  \item \( V \in \mathbb{R}^{n \times n} \) is an orthogonal matrix whose columns are the right singular vectors of \( X \).
+\end{itemize}
+
+\textbf{Properties:}
+
+\begin{itemize}
+  \item The columns of \( U \) and \( V \) are orthonormal bases for the column space and row space of \( X \), respectively.
+  \item The non-zero singular values in \( \Sigma \) are the square roots of the non-zero eigenvalues of both \( X^TX \) and \( XX^T \).
+\end{itemize}
+
+\textbf{Reduced SVD:}
+
+The reduced version of SVD is used when we want to approximate \( X \) by a matrix of lower rank \( k \), which is less than the original rank \( r \). It can be expressed as:
+
+\[
+\tilde{X} = U_k \Sigma_k V_k^T
+\]
+
+where \( U_k \) and \( V_k \) contain only the first \( k \) columns of \( U \) and \( V \), and \( \Sigma_k \) contains only the top \( k \) singular values. This approximation minimizes the Frobenius norm \( \|X - \tilde{X}\|_F \) among all rank-\( k \) approximations.
+
+\section{Q11.2 Formulate the Eckart-Young theorem. Provide an interpretation of what the theorem says and why it is useful. [10]}
+
+The Eckart-Young theorem states that given a matrix \( X \in \mathbb{R}^{n \times m} \) and its Singular Value Decomposition (SVD), the best rank-\( k \) approximation \( X_k \) of \( X \) in terms of the Frobenius norm is obtained by retaining the first \( k \) singular values and corresponding singular vectors. Formally:
+
+\[
+X_k = \sigma_1 u_1 v_1^T + \ldots + \sigma_k u_k v_k^T
+\]
+
+where \( \sigma_i \) are the singular values, and \( u_i \), \( v_i \) are the left and right singular vectors, respectively. This approximation minimizes the Frobenius norm of the difference between \( X \) and \( X_k \):
+
+\[
+\| X - X_k \|_F \leq \| X - B \|_F
+\]
+
+for any \( B \in \mathbb{R}^{n \times m} \) of rank \( k \). The Frobenius norm is the square root of the sum of the absolute squares of its elements, and it can also be expressed as the square root of the trace of \( X^T X \). It has the important property that multiplying by an orthonormal matrix does not change the norm:
+
+\[
+\| U A \|_F = \sqrt{\text{trace}((UA)^T UA)} = \sqrt{\text{trace}(A^T U^T U A)} = \sqrt{\text{trace}(A^T A)} = \| A \|_F
+\]
+
+The norm is invariant under orthogonal transformations, and the best strategy to approximate \( X \) while preserving most of its norm is to remove the smallest singular values.
+
+\section{Q11.3 Given a data matrix $\boldsymbol X$, explain how to compute the PCA of dimension M using the SVD decomposition. [10]}
+
+Principal Component Analysis (PCA) can be computed using Singular Value Decomposition (SVD) of the data matrix \( X \). For a data matrix \( X \in \mathbb{R}^{n \times m} \), where each row is a data point and each column is a feature, PCA is performed as follows:
+
+\begin{enumerate}
+    \item Center the data by subtracting the mean of each feature from the data matrix, resulting in the mean-centered matrix \( \tilde{X} = X - \bar{x} \).
+    \item Compute the SVD of \( \tilde{X} \), which is given by \( \tilde{X} = U\Sigma V^T \).
+    \item The columns of \( V \) (right singular vectors) correspond to the principal components of \( X \).
+    \item To reduce the dimensionality to \( M \), select the first \( M \) columns of \( V \), and the first \( M \) singular values from \( \Sigma \).
+    \item The projection of \( X \) onto the \( M \)-dimensional subspace is given by \( X_M = X V_M \), where \( V_M \) is the matrix containing the first \( M \) columns of \( V \).
+\end{enumerate}
+
+This works because the singular values in \( \Sigma \) represent the amount of variance captured by each principal component, and the columns of \( V \) are the directions along which the variance is maximized. By taking the first \( M \) components, we retain the features that capture the most variance in the data.
+
+\[
+\| \mathbf{X} - \bar{\mathbf{x}} \|_F^2 = \text{trace} \left( (\mathbf{X} - \bar{\mathbf{x}})^T (\mathbf{X} - \bar{\mathbf{x}}) \right) = N \sum_{i=1}^{D} \text{Var}(\mathbf{X}_{:,i})
+\]
+
+Approximating the matrix in terms of Frobenius norm means keeping the most variance from the data. Components are ordered by how much variability in the data they capture.
+
+\[
+\begin{gathered}
+\text{Let } \mathbf{S} = \frac{1}{N} (\mathbf{X} - \bar{\mathbf{x}})^T (\mathbf{X} - \bar{\mathbf{x}}), \\
+\text{then PCA of } \mathbf{X} \text{ involves the eigenvectors of } \mathbf{S}, \\
+\text{denoted by the } \mathbf{V} \text{ matrix in the SVD of } \mathbf{X} - \bar{\mathbf{x}}.
+\end{gathered}
+\]
+
+\section{Q11.4 Describe how SVD can be used in recommender systems. What are the advantages of using SVD instead of the full user-interaction matrix? [10]}
+Let $R \in \mathbb{R}^{m \times n}$ be a user--item interaction matrix (rows = users, columns = items; entries are ratings, likes, clicks, etc.). Such matrices are typically very large, sparse, and noisy. 
+
+\subsection*{Using SVD for recommendation (latent-factor modelling)}
+Compute an SVD (or a truncated/low-rank variant):
+\[
+R = U\Sigma V^\top \approx U_k \Sigma_k V_k^\top,
+\]
+where $k \ll \min(m,n)$ and $\Sigma_k$ keeps only the largest singular values (dropping small ones acts as denoising). 
+
+From the truncated factors, define low-dimensional embeddings (latent vectors) for users and items, e.g.
+\[
+P := U_k \Sigma_k^{1/2}\in\mathbb{R}^{m\times k}, \qquad
+Q := V_k \Sigma_k^{1/2}\in\mathbb{R}^{n\times k}.
+\]
+Then a predicted preference score is
+\[
+\hat{r}_{ui} = p_u^\top q_i \quad \text{(optionally plus user/item/global bias terms).}
+\]
+Recommendations for user $u$ are obtained by ranking items $i$ by $\hat{r}_{ui}$, and similarity search can be performed directly in the $k$-dimensional latent space (often described as ``eigenusers'' and ``eigencontent''). 
+
+\subsection*{Advantages over the full interaction matrix}
+\begin{itemize}
+  \item \textbf{Dimensionality reduction:} represent each user/item with only $k$ numbers instead of $n$ or $m$.
+  \item \textbf{Compression / memory:} store $U_k,\Sigma_k,V_k$ with cost $O(k(m+n))$ rather than $O(mn)$.
+  \item \textbf{Noise reduction:} discarding small singular values removes variance likely due to noise/outliers. 
+  \item \textbf{Best low-rank approximation:} the truncated SVD gives the optimal rank-$k$ approximation in Frobenius norm (Eckart--Young), so it preserves as much signal/energy as possible for a given $k$. 
+  \item \textbf{Faster computation:} scoring and nearest-neighbour similarity become operations in $\mathbb{R}^k$; many downstream tasks (ranking, clustering) are cheaper.
+  \item \textbf{Generalization to unseen pairs:} the low-rank model can infer missing entries (unobserved user--item pairs) via latent structure, rather than relying on exact overlap in sparse raw interactions.
+\end{itemize}
+
+\paragraph{Note.} In real systems, ``pure'' SVD is often adapted (e.g., regularization, handling implicit feedback, alternative loss functions), but the core idea remains low-rank latent factors derived from SVD-like matrix factorization. 
+
+\section{Q11.5 Given a data matrix $X$, write down the algorithm for computing the PCA of dimension $M$ using the power iteration algorithm. [20]}
+
+\begin{algorithm}[H]
+\caption{Computing PCA --- The Power Iteration Algorithm}
+
+\textbf{Input:} Matrix $X$, desired number of dimensions $M$.
+
+\begin{itemize}
+  \item Compute the mean $\mu$ of the examples (the rows of $X$).
+  \item Compute the covariance matrix $S \leftarrow \frac{1}{N}(X-\mu)^T(X-\mu)$.
+  \item for $i$ in $\{1,2,\ldots,M\}$:
+  \begin{itemize}
+    \item[$\circ$] Initialize $v_i$ randomly.
+    \item[$\circ$] Repeat until convergence (or for a fixed number of iterations):
+    \begin{itemize}
+      \item[$\blacksquare$] $v_i \leftarrow S v_i$
+      \item[$\blacksquare$] $\lambda_i \leftarrow \|v_i\|$
+      \item[$\blacksquare$] $v_i \leftarrow v_i/\lambda_i$
+    \end{itemize}
+    \item[$\circ$] $S \leftarrow S - \lambda_i v_i v_i^T$
+  \end{itemize}
+  \item Return $(X-\mu)V$, where the columns of $V$ are $v_1,v_2,\ldots,v_M$.
+\end{itemize}
+\end{algorithm}
+
+\section{Q11.6 List at least two applications of SVD or PCA. [5]}
+
+Singular Value Decomposition (SVD) and Principal Component Analysis (PCA) are widely used in various applications. One common application is image compression, where SVD or PCA is used to reduce the dimensionality of image data by retaining only the most significant components, effectively reducing storage requirements without sacrificing much image quality. Another application is topic modeling in natural language processing (NLP), where PCA or SVD is applied to text data, such as in Latent Semantic Analysis (LSA), to extract underlying patterns in word usage and identify the most important topics in a corpus of documents. These techniques are essential for simplifying complex data and uncovering hidden structures in a wide range of domains.
+
+Also, PCA is often used in data visualization to reduce high-dimensional data to 2 or 3 dimensions for plotting, allowing for better visualization of the data distribution and relationships between data points.
+
+\section{Q11.7 Describe the $K$-means algorithm, including the \texttt{kmeans++} initialization. What is it used for? What is the loss function that the algorithm optimizes? What can you say about the algorithm convergence? [20]}
+\paragraph{What it is used for.}
+$K$-means is an \emph{unsupervised} clustering method: given data points $x_1,\dots,x_N \in \mathbb{R}^D$ and a chosen number of clusters $K$, it partitions the points into $K$ groups and represents each group by a \emph{cluster center} (centroid). 
+
+\paragraph{Model and loss function.}
+Let $z_{i,k}\in\{0,1\}$ indicate whether point $x_i$ is assigned to cluster $k$ (with $\sum_{k=1}^K z_{i,k}=1$), and let cluster centers be $\mu_1,\dots,\mu_K$.
+$K$-means minimizes the within-cluster sum of squared distances
+\[
+J(\{z_{i,k}\},\{\mu_k\})
+= \sum_{i=1}^{N}\sum_{k=1}^{K} z_{i,k}\,\lVert x_i-\mu_k\rVert^2 .
+\]
+
+\begin{algorithm}[H]
+\caption{$K$-means (Lloyd's algorithm)}
+\label{alg:kmeans}
+\textbf{Input:} Input points $x_1,\ldots,x_N$, number of clusters $K$.\\
+\textbf{Output:} Cluster centers $\mu_1,\ldots,\mu_K$ and assignments $z_{i,k}$.\\[2mm]
+\textbf{Loss:} $J \;=\; \sum_{i=1}^{N}\sum_{k=1}^{K} z_{i,k}\,\lVert x_i-\mu_k\rVert^2$.
+
+\begin{itemize}
+  \item[$\bullet$] Initialize $\mu_1,\ldots,\mu_K$ as $K$ random input points (or using \texttt{kmeans++}, Alg.~\ref{alg:kmeanspp}).
+  \item[$\bullet$] Repeat until convergence (or until patience runs out):
+  \begin{itemize}
+    \item[$\circ$] Compute the best possible $z_{i,k}$ (minimizes $J$ for fixed $\mu$):
+    \[
+      z_{i,k}=
+      \begin{cases}
+        1 & \text{if } k=\arg\min_{j}\lVert x_i-\mu_j\rVert^2,\\
+        0 & \text{otherwise.}
+      \end{cases}
+    \]
+    \item[$\circ$] Compute the best possible $\mu_k$ (minimizes $J$ for fixed $z$):
+    \[
+      \mu_k \;=\; \arg\min_{\mu}\sum_{i} z_{i,k}\lVert x_i-\mu\rVert^2
+      \;=\;
+      \frac{\sum_i z_{i,k}x_i}{\sum_i z_{i,k}}.
+    \]
+  \end{itemize}
+\end{itemize}
+\end{algorithm}
+
+\paragraph{\texttt{kmeans++} initialization.}
+Instead of picking all initial centers uniformly at random, \texttt{kmeans++} chooses:
+\begin{itemize}
+  \item the first center uniformly at random from the data;
+  \item each subsequent center $x$ with probability proportional to $D(x)^2$, where $D(x)$ is the distance from $x$ to the \emph{nearest already chosen} center. 
+\end{itemize}
+This typically yields better starting points; moreover, it can be shown to achieve an $O(\log K)$ approximation ratio \emph{in expectation}. 
+
+\paragraph{Convergence properties.}
+Each iteration \emph{does not increase} the objective:
+\begin{itemize}
+  \item updating assignments (nearest-center choice) decreases $J$ or keeps it the same;
+  \item updating centers (means) decreases $J$ or keeps it the same. 
+\end{itemize}
+Therefore, $K$-means converges to a \emph{local optimum} (not necessarily the global one) and is sensitive to initialization; a common practice is to run it multiple times with different initializations and keep the solution with the lowest $J$. 
+
+\section{Q11.8 Name at least two clustering algorithms. What is their main principle? How do they differ? [10]}
+\subsection*{K-means Clustering}
+Approach: Partitional clustering algorithm that divides data into $k$ clusters by minimizing the variance within each cluster.
+How it works: The algorithm iteratively assigns points to the nearest cluster center (centroid) and updates the centroid based on the mean of points in each cluster. This process is repeated until convergence.
+Advantages: Simple, fast, and efficient for large datasets with well-separated spherical clusters.
+Disadvantages: Requires specifying the number of clusters $k$ in advance, sensitive to initial centroid placement, and struggles with non-spherical or overlapping clusters.
+
+\subsection*{Hierarchical Clustering}
+Approach: Builds a hierarchy of clusters either in a bottom-up (agglomerative) or top-down (divisive) manner.
+How it works: In agglomerative hierarchical clustering, each data point starts as its own cluster, and pairs of clusters are merged based on a distance metric until all points are in a single cluster. In divisive clustering, all points start in one cluster, and the algorithm recursively splits them.
+Advantages: Does not require pre-specifying the number of clusters, can produce a dendrogram to visualize the relationships between clusters.
+Disadvantages: Computationally expensive, particularly for large datasets, and sensitive to noise and outliers.
+
+\subsection*{Comparison}
+K-means is efficient and works well for spherical clusters with a known number of clusters but struggles with complex data structures.
+Hierarchical clustering produces a detailed tree-like structure of clusters and doesn't require the number of clusters to be defined in advance, but it can be slow for large datasets.

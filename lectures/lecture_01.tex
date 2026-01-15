@@ -1,0 +1,147 @@
+\part{Lecture 1}
+\section{Q1.1 Explain how reinforcement learning differs from supervised and unsupervised learning in terms of the type of input the learning algorithms use to improve model performance. [5]}
+
+Reinforcement learning differs from supervised and unsupervised learning based on the type of input and feedback used to improve model performance. In supervised learning, the algorithm learns from labeled data where each input is paired with a known output, aiming to minimize prediction errors. Unsupervised learning uses unlabeled data to uncover hidden patterns or structures without explicit feedback. In contrast, reinforcement learning involves an agent interacting with an environment, receiving rewards or penalties as feedback for actions taken, and learning through trial-and-error to maximize cumulative rewards over time. Unlike supervised learning’s direct guidance and unsupervised learning’s pattern discovery, reinforcement learning focuses on sequential decision-making.
+
+\section{Q1.2 Explain why we need separate train and test data? What is generalization and how the concept relates to underfitting and overfitting? [10]}
+
+\textbf{Why Separate Train and Test Data:}
+\begin{itemize}
+    \item To evaluate the performance of a machine learning model reliably.
+    \item Training data is used to fit the model, while test data assesses its performance on unseen data.
+    \item Prevents overfitting, ensuring the model generalizes well to new, unseen data.
+\end{itemize}
+
+\textbf{Generalization:}
+\begin{itemize}
+    \item The ability of a model to perform well on new, unseen data.
+    \item Indicates how well the model learns the underlying patterns, not just memorizing the training data.
+\end{itemize}
+
+\textbf{Relation to Underfitting and Overfitting:}
+\begin{itemize}
+    \item \textbf{Underfitting:} Model is too simple, fails to capture underlying patterns in data, leading to poor performance on both training and test data.
+    \item \textbf{Overfitting:} Model is too complex, captures noise along with patterns in the training data, leading to poor generalization on test data.
+\end{itemize}
+
+\section{Q1.3 Define the three key components of Mitchell's definition of machine learning (Task $T$, Performance measure $P$, and Experience $E$). Give a concrete example for each component in the context of email spam classification. [10]}
+
+Mitchell (1997) states that a program \emph{learns} from \textbf{experience $E$} with respect to a class of
+\textbf{tasks $T$} and \textbf{performance measure $P$} if its performance at tasks in $T$, as measured by $P$,
+improves with experience $E$.
+
+\subsection*{Task $T$ (what the system must do)}
+\textbf{Definition:} The task specifies the mapping the model should learn (e.g., classification or regression, structured prediction, denoising, density estimation).
+
+\textbf{Spam example:} \emph{Binary classification} of emails:
+given an email (subject + body), predict one of two classes
+\[
+T:\; x \mapsto y,\quad y \in \{\text{spam},\ \text{ham}\}.
+\]
+Here $x$ can be represented by features such as word counts/TF--IDF, presence of URLs, sender domain, etc.
+
+\subsection*{Performance measure $P$ (how success is evaluated)}
+\textbf{Definition:} A quantitative metric used to evaluate how well the program performs the task.
+
+\textbf{Spam example:} Measure performance on a held-out test set using, e.g.,
+accuracy, error rate or $F_1$ score:
+\[
+P = \text{Accuracy}=\frac{TP+TN}{TP+TN+FP+FN}
+\quad\text{or}\quad
+P = F_1=\frac{2\cdot \text{Precision}\cdot \text{Recall}}{\text{Precision}+\text{Recall}}.
+\]
+(Using $F_1$ is common when the classes are imbalanced.)
+
+\subsection*{Experience $E$ (what data/feedback the system learns from)}
+\textbf{Definition:} The source of experience used to improve performance (e.g., labeled data in supervised learning).
+
+Supervised: usually a dataset with desired outcomes (labels or targets)
+
+Unsupervised: usually data without any annotation (raw text, raw images, …
+
+Reinforcement learning, semi-supervised learning, …
+
+\textbf{Spam example:} A supervised training dataset of emails with ground-truth labels:
+\[
+E = \{(x^{(i)}, y^{(i)})\}_{i=1}^{N}, \quad y^{(i)} \in \{\text{spam},\text{ham}\}.
+\]
+The model ``learns'' by adjusting its parameters based on these labeled examples so that $P$ improves over time.
+
+\section{Q1.4 Explain the difference between classification and regression tasks. For each task type, provide: (a) the mathematical representation of the target variable, (b) a real-world example, and (c) one appropriate evaluation metric. [10]}
+
+In supervised learning, each example has an input $\boldsymbol{x}\in\mathbb{R}^D$ and a target $t$.
+The key difference is the \emph{type} of the target: classification predicts a discrete label, while regression predicts a real value.
+
+\subsection*{Classification}
+\begin{enumerate}
+    \item[(a)] \textbf{Target variable:} a class/label from a fixed set of $K$ categories, e.g.
+    \[
+        t \in \{0,1,\dots,K-1\}.
+    \]
+    (Equivalently, one can use a one-hot vector $\boldsymbol{t}\in\{0,1\}^K$ with $\sum_k t_k=1$.)
+
+    \item[(b)] \textbf{Real-world example:} email spam detection, where the model assigns the label
+    \[
+        t \in \{\text{spam},\text{ham}\}.
+    \]
+
+    \item[(c)] \textbf{Evaluation metric:} \emph{accuracy} (or error rate / $F$-score), e.g.
+    \[
+        \mathrm{Accuracy}=\frac{\#\text{correct predictions}}{\#\text{all predictions}}.
+    \]
+\end{enumerate}
+
+\subsection*{Regression}
+\begin{enumerate}
+    \item[(a)] \textbf{Target variable:} a real-valued number,
+    \[
+        t \in \mathbb{R}.
+    \]
+
+    \item[(b)] \textbf{Real-world example:} predicting the price of a house (a continuous value) from features such as area, location, and number of rooms.
+
+    \item[(c)] \textbf{Evaluation metric:} \emph{mean squared error (MSE)} (often reported as RMSE),
+    \[
+        \mathrm{MSE}=\frac{1}{N}\sum_{i=1}^{N}\bigl(\hat{t}_i - t_i\bigr)^2,
+        \qquad
+        \mathrm{RMSE}=\sqrt{\mathrm{MSE}}.
+    \]
+\end{enumerate}
+
+\section{Q1.5 Define prediction function of a linear regression model and write down $L^2$-regularized mean squared error loss. [10]}
+
+\textbf{Prediction Function:}
+Given an input vector $ x \in \mathbb{R}^D $, the prediction function $ f $ for linear regression is defined as:
+\[
+f(x; w, b) = w^T x + b
+\]
+where $ w $ is the weight vector, $ b $ is the bias term, and $ T $ denotes the transpose of $ w $.
+
+\textbf{$ L_2 $-Regularized Mean Squared Error Loss:}
+The $ L_2 $-regularized mean squared error loss (also known as Ridge Regression) for a dataset with $ N $ samples is defined as:
+\[
+L(w, b) = \frac{1}{2N} \sum_{i=1}^{N} (f(x_i; w) - t_i)^2 + \lambda \| w \|^2
+\]
+where $ t_i $ is the true target value for the $ i $-th sample, $ \lambda $ is the regularization parameter, and $ \| w \|^2 $ denotes the $ L_2 $ norm of the weight vector, which is the sum of the squares of its components.
+
+
+\section{Q1.6 Starting from unregularized sum of squares error of a linear regression model, show how the explicit solution can be obtained, assuming $X^TX$ is regular. [10]}
+
+In order to find a minimum of $ \frac{1}{2} \sum_{i=1}^{N} (x_i^T w - t_i)^2 $, we can inspect values where the derivative of the error function is zero, with respect to all weights $ w_j $.
+
+\[
+\frac{\partial}{\partial w_j} \frac{1}{2} \sum_{i=1}^{N} (x_i^T w - t_i)^2 = \frac{1}{2} \sum_{i=1}^{N} 2(x_i^T w - t_i)x_{ij} = \sum_{i=1}^{N} x_{ij}(x_i^T w - t_i)
+\]
+
+Therefore, we want for all $ j $ that $ \sum_{i=1}^{N} x_{ij}(x_i^T w - t_i) = 0 $. We can rewrite the explicit sum into $ X_{*,j}^T (Xw - t) = 0 $, then write the equations for all $ j $ together using matrix notation as $ X^T(Xw - t) = 0 $, and finally, rewrite to
+
+\[
+X^TXw = X^Tt.
+\]
+
+The matrix $ X^TX $ is of size $ D \times D $. If it is regular, we can compute its inverse and therefore
+
+\[
+w = (X^TX)^{-1}X^Tt.
+\]
+

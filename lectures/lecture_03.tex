@@ -1,0 +1,473 @@
+\part{Lecture 3}
+
+\section{Q3.1 Define binary classification, write down the perceptron algorithm, and show how a prediction is made for a given data instance $x$. [10]}
+
+Binary classification is the task of classifying the elements of a given set into two groups based on a classification rule. In binary classification, the output variable can take only two values, typically denoted as 0 and 1, or -1 and 1 in some contexts.
+
+The perceptron algorithm is a binary classifier that linearly separates these two classes. The algorithm iteratively adjusts the weights based on the training data. Given a set of features \( x \) and a target \( t \), the perceptron rule updates the weights \( w \) as follows:
+
+\begin{algorithm}[H]
+\caption{Perceptron Learning Algorithm}
+\begin{algorithmic}[1]
+\Require Linearly separable dataset $X\in\mathbb{R}^{N\times D}$, labels $\boldsymbol t\in\{-1,+1\}^N$
+\Ensure Weights $\boldsymbol w\in\mathbb{R}^D$ such that $t_i\,\boldsymbol x_i^\top \boldsymbol w>0$ for all $i$
+\State $\boldsymbol w \leftarrow \boldsymbol 0$
+\While{not all examples are classified correctly}
+    \For{$i=1$ \textbf{to} $N$}
+        \State $y \leftarrow \boldsymbol x_i^\top \boldsymbol w$
+        \If{$t_i\,y \le 0$} \Comment{misclassified example}
+            \State $\boldsymbol w \leftarrow \boldsymbol w + t_i\,\boldsymbol x_i$
+        \EndIf
+    \EndFor
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+To make a prediction \( \hat{y} \) for a new example with feature vector \( x \), the perceptron uses the sign of the dot product between the features and weights:
+
+\[
+\hat{y} = \text{sign}(x^T w)
+\]
+
+where \( \text{sign} \) is an activation function that maps positive values to +1 and non-positive values to -1.
+
+\subsection*{Prediction Example}
+Given a new input \( x \) and trained weights \( w \), the perceptron prediction is computed as:
+\[
+\hat{y} = \text{sign}(x^T w + b)
+\]
+where \( b \) is the bias term of the perceptron. If \( \hat{y} \) is positive, the input is classified into one class, and if it is negative, it is classified into the other class.
+
+\section{Q3.2 Explain what it means for a dataset to be linearly separable. Give an example of a simple 2D dataset that is \textit{not} linearly separable and explain why the perceptron algorithm would fail on it. [10]}
+A binary-labeled dataset $\{(\boldsymbol x_i,t_i)\}_{i=1}^N$ with $t_i\in\{-1,+1\}$ is called \textbf{linearly separable}
+if there exist parameters $(\boldsymbol w,b)$ such that a single linear decision boundary separates the two classes:
+\[
+\exists\,(\boldsymbol w,b)\ \ \text{s.t.}\ \ t_i\bigl(\boldsymbol w^\top \boldsymbol x_i + b\bigr) > 0 \quad \forall i.
+\]
+Equivalently, all positive examples lie in one open half-space and all negative examples lie in the other half-space
+induced by the hyperplane (line in 2D) $\boldsymbol w^\top \boldsymbol x + b = 0$.
+
+\subsection*{Example of a simple 2D dataset that is \emph{not} linearly separable}
+A standard example is the XOR pattern with four points in $\mathbb{R}^2$:
+\[
+\text{Positive }(+1):\ (0,0),\ (1,1),
+\qquad
+\text{Negative }(-1):\ (0,1),\ (1,0).
+\]
+This set is \emph{not} linearly separable because any line divides the plane into two half-planes, but in XOR each class
+occupies two opposite corners of a square; whichever side of a line contains $(0,0)$ will necessarily contain at least one
+negative point (or vice versa). Therefore, no single linear boundary can make all signs correct simultaneously.
+
+\subsection*{Why the perceptron fails on such data}
+The perceptron algorithm iteratively updates $\boldsymbol w$ whenever it finds a misclassified example, and its convergence
+guarantee relies on the existence of a separating hyperplane (linear separability). If the dataset is not linearly separable,
+there is \emph{no} $\boldsymbol w$ (and $b$) satisfying $t_i(\boldsymbol w^\top \boldsymbol x_i + b)>0$ for all $i$, so the
+algorithm keeps encountering misclassified points and continues updating indefinitely (it does not terminate/converge).
+
+\section{Q3.3 For discrete random variables, define entropy, cross-entropy, and Kullback-Leibler divergence, and prove the Gibbs inequality (i.e., that KL divergence is non-negative). [20]}
+
+Entropy \( H(P) \) for a discrete random variable with probability distribution \( P \) is defined as:
+\[
+H(P) = - \sum_x P(x) \log P(x)
+\]
+It measures the expected level of 'surprise' or uncertainty inherent in the variable's possible outcomes.
+
+Cross-entropy \( H(P, Q) \) between two discrete probability distributions \( P \) and \( Q \) is defined as:
+\[
+H(P, Q) = - \sum_x P(x) \log Q(x)
+\]
+It measures the expected number of bits (if the log is in base 2) required to identify an event from a set of possibilities if a wrong distribution \( Q \) is used instead of the true distribution \( P \).
+
+Kullback-Leibler divergence \( D_{KL}(P||Q) \) from \( Q \) to \( P \) is defined as:
+\[
+D_{KL}(P||Q) = H(P, Q) - H(P) = \sum_x P(x) \log \frac{P(x)}{Q(x)}
+\]
+It measures how one probability distribution diverges from a second, expected probability distribution.
+
+\textbf{Proof of Gibbs Inequality:}
+We want to prove that \( D_{KL}(P||Q) \geq 0 \), with equality if and only if \( P = Q \).
+
+Using the log sum inequality \( \log \frac{a}{b} \leq \frac{a}{b} - 1 \) with equality only if \( a = b \), we have:
+
+\begin{align*}
+H(P) - H(P,Q) &= \sum_x P(x) \log \frac{Q(x)}{P(x)} \\
+&\leq \sum_x P(x) \left( \frac{Q(x)}{P(x)} - 1 \right) \\
+&= \sum_x Q(x) - \sum_x P(x) \\
+&= 0
+\end{align*}
+
+since \( \sum_x P(x) = 1 \) and \( \sum_x Q(x) = 1 \). The inequality is strict unless \( P(x) = Q(x) \) for all \( x \), which proves Gibbs Inequality.
+
+
+\section{Q3.4 Explain the notion of likelihood in machine learning. What likelihood are we estimating, and why do we do it? [10]}
+
+Likelihood in the context of maximum likelihood estimation (MLE) is a function that measures the probability of observing the given data under different parameter values of a statistical model. For a set of independent and identically distributed (i.i.d.) data points \( X = \{x_1, x_2, \ldots, x_N\} \), the likelihood of a parameter \( w \) is defined as:
+
+\[
+L(w) = \prod_{i=1}^{N} P_{\text{model}}(x_i; w)
+\]
+
+where \( P_{\text{model}}(x_i; w) \) is the probability of observing the specific data point \( x_i \) under the model parameterized by \( w \).
+
+In MLE, we seek the parameter \( w \) that maximizes this likelihood function, which is equivalent to maximizing the probability of observing the given data. While the likelihood itself is not a probability distribution, it serves as a scoring function that indicates how well the model with a particular set of parameters explains the observed data. Maximizing the likelihood function leads to finding the parameter values that make the observed data most probable under the assumed model.
+
+
+\section{Q3.5 Describe maximum likelihood estimation as minimizing NLL, cross-entropy, and KL divergence and explain whether they differ or are the same and why. [20]}
+Let $x_1,\dots,x_N$ be i.i.d.\ samples from an (unknown) data distribution $p_{\text{data}}(x)$.
+We fit a probabilistic model $p_{\text{model}}(x;w)$.
+
+\subsection*{1) Maximum likelihood $\Leftrightarrow$ minimizing negative log-likelihood (NLL)}
+Maximum likelihood estimation chooses parameters that maximize the likelihood of the observed dataset:
+\[
+w_{\text{MLE}}
+= \arg\max_w \prod_{i=1}^{N} p_{\text{model}}(x_i;w).
+\]
+Taking the logarithm (monotone) and negating turns this into minimization of the \textbf{negative log-likelihood}:
+\[
+w_{\text{MLE}}
+= \arg\min_w \left[-\sum_{i=1}^{N} \log p_{\text{model}}(x_i;w)\right].
+\]
+Often we use the average NLL (same minimizer, just scaled by $1/N$):
+\[
+\mathcal{L}_{\text{NLL}}(w)= -\frac{1}{N}\sum_{i=1}^{N} \log p_{\text{model}}(x_i;w).
+\]
+
+\subsection*{2) NLL $\Leftrightarrow$ cross-entropy with the empirical distribution}
+Define the empirical distribution $\hat p(x)$ that assigns probability $1/N$ to each observed sample (and $0$ elsewhere).
+Then the average NLL can be written as an expectation:
+\[
+\mathcal{L}_{\text{NLL}}(w)
+= \mathbb{E}_{x\sim \hat p}\bigl[-\log p_{\text{model}}(x;w)\bigr].
+\]
+By definition, the \textbf{cross-entropy} between distributions $p$ and $q$ is
+\[
+H(p,q)=\mathbb{E}_{x\sim p}\bigl[-\log q(x)\bigr].
+\]
+Therefore,
+\[
+\boxed{\ \mathcal{L}_{\text{NLL}}(w) = H(\hat p,\;p_{\text{model}}(x;w))\ }.
+\]
+So, for a fixed dataset, \textbf{minimizing average NLL is exactly the same objective as minimizing cross-entropy with $\hat p$.}
+
+\subsection*{3) Cross-entropy $\Leftrightarrow$ KL divergence (up to an additive constant)}
+The KL divergence is
+\[
+D_{\mathrm{KL}}(p\|q)=\mathbb{E}_{x\sim p}\left[\log\frac{p(x)}{q(x)}\right]
+= \mathbb{E}_{x\sim p}[\log p(x)]-\mathbb{E}_{x\sim p}[\log q(x)].
+\]
+Using $H(p)=\mathbb{E}_{x\sim p}[-\log p(x)]$ and $H(p,q)=\mathbb{E}_{x\sim p}[-\log q(x)]$, we get the identity
+\[
+\boxed{\ H(p,q) = H(p) + D_{\mathrm{KL}}(p\|q)\ }.
+\]
+Applying this with $p=\hat p$ and $q=p_{\text{model}}(x;w)$ yields
+\[
+H(\hat p,\;p_{\text{model}}(x;w))
+= H(\hat p) + D_{\mathrm{KL}}\!\left(\hat p \,\|\, p_{\text{model}}(x;w)\right).
+\]
+
+\subsection*{4) Are NLL, cross-entropy, and KL the same or different?}
+\begin{itemize}
+    \item \textbf{NLL vs.\ cross-entropy:} for a fixed dataset, \emph{they are the same objective} (NLL is cross-entropy with the empirical distribution $\hat p$), possibly differing only by a constant scale factor ($1$ vs.\ $1/N$), which does not change the minimizer.
+    \item \textbf{Cross-entropy vs.\ KL:} they differ by an \emph{additive constant} $H(\hat p)$ that does \emph{not} depend on $w$.
+    Hence,
+    \[
+    \arg\min_w H(\hat p,p_{\text{model}}(\cdot;w))
+    \;=\;
+    \arg\min_w D_{\mathrm{KL}}(\hat p \,\|\, p_{\text{model}}(\cdot;w)).
+    \]
+\end{itemize}
+Therefore, \textbf{MLE can be viewed equivalently as minimizing NLL, minimizing cross-entropy, or minimizing KL divergence},
+because these objectives are identical up to scaling and/or adding constants independent of $w$.
+
+\subsection*{5) Conditional (supervised) case}
+For supervised learning with pairs $(x_i,t_i)$ and model $p_{\text{model}}(t\mid x;w)$:
+\[
+w_{\text{MLE}}
+= \arg\min_w \left[-\sum_{i=1}^{N}\log p_{\text{model}}(t_i\mid x_i;w)\right]
+= \arg\min_w \ \mathbb{E}_{(x,t)\sim \hat p}\bigl[-\log p_{\text{model}}(t\mid x;w)\bigr].
+\]
+This is the \textbf{conditional cross-entropy} between the empirical conditional distribution and the model, and it equals
+a conditional KL divergence plus an additive constant independent of $w$.
+
+{\color{gray}
+
+Let \( X = \{x_1, x_2, \ldots, x_N\} \) be training data drawn independently from the data-generating distribution \( p_{\text{data}} \). We denote the empirical data distribution as \( \hat{p}_{\text{data}} \), where \( \hat{p}_{\text{data}}(x) = \frac{1}{N} \sum_{i=1}^{N} \mathbb{I}[x_i = x] \). Let \( p_{\text{model}}(x; w) \) be a family of distributions.
+
+The maximum likelihood estimation of \( w \) is:
+
+\[
+w_{\text{MLE}} = \arg \max_w p_{\text{model}}(X; w) = \arg \max_w \prod_{i=1}^{N} p_{\text{model}}(x_i; w)
+\]
+
+\[
+= \arg \min_w -\sum_{i=1}^{N} \log p_{\text{model}}(x_i; w)
+\]
+
+\[
+= \arg \min_w \mathbb{E}_{x \sim \hat{p}_{\text{data}}}[- \log p_{\text{model}}(x; w)]
+\]
+
+\[
+= \arg \min_w H(\hat{p}_{\text{data}}(x), p_{\text{model}}(x; w))
+\]
+
+\[
+= \arg \min_w D_{KL}(\hat{p}_{\text{data}}(x) || p_{\text{model}}(x; w)) + H(\hat{p}_{\text{data}}(x))
+\]
+
+For MLE generalized to the conditional case, where the goal is to predict \( t \) given \( x \):
+
+\[
+w_{\text{MLE}} = \arg \max_w p_{\text{model}}(t | x; w) = \arg \max_w \prod_{i=1}^{N} p_{\text{model}}(t_i | x_i; w)
+\]
+
+\[
+= \arg \min_w -\sum_{i=1}^{N} \log p_{\text{model}}(t_i | x_i; w)
+\]
+
+\[
+= \arg \min_w \mathbb{E}_{(x,t) \sim \hat{p}_{\text{data}}}[- \log p_{\text{model}}(t | x; w)]
+\]
+
+\[
+= \arg \min_w H(\hat{p}_{\text{data}}(t | x), p_{\text{model}}(t | x; w))
+\]
+
+\[
+= \arg \min_w D_{KL}(\hat{p}_{\text{data}}(t | x) || p_{\text{model}}(t | x; w)) + H(\hat{p}_{\text{data}}(t | x))
+\]
+
+Where \( H(\hat{p}_{\text{data}}) \) is the entropy of the empirical data distribution and \( D_{KL} \) is the Kullback-Leibler divergence. The terms are defined such that the conditional entropy is \( H(\hat{p}_{\text{data}}) = \mathbb{E}_{(x,t) \sim \hat{p}_{\text{data}}}[-\log(\hat{p}_{\text{data}}(t | x))] \) and the conditional cross-entropy is \( H(\hat{p}_{\text{data}}, p_{\text{model}}) = \mathbb{E}_{(x,t) \sim \hat{p}_{\text{data}}}[-\log(p_{\text{model}}(t | x; w))] \). The negative log-likelihood (NLL) is equivalent to cross-entropy or Kullback-Leibler divergence in the context of MLE.
+}
+\section{Q3.6 Provide an intuitive justification for why cross-entropy is a good optimization objective in machine learning. What distributions do we compare in cross-entropy? Why is it good when the cross-entropy is low? [5]}
+
+Cross-entropy is a good optimization objective in machine learning because it measures how well the predicted probability distribution from a model matches the true distribution of the target labels. Intuitively, it quantifies the difference between what the model believes (its predicted probabilities) and the actual outcomes.
+
+In classification tasks, cross-entropy compares:
+\begin{itemize}
+    \item True distribution: Represented as a one-hot encoded vector for each class, where the correct class has a probability of 1, and all others are 0.
+    \item Predicted distribution: The model's output probabilities for each class (softmax or sigmoid outputs).
+\end{itemize}
+
+When the cross-entropy is low, it means the predicted probabilities are close to the true labels — the model is confident and correct. For instance, if a model correctly predicts a probability near 1 for the correct class and near 0 for others, the cross-entropy loss is minimal. Conversely, high cross-entropy means the predictions are far from the true labels, indicating poor performance.
+
+In essence, minimizing cross-entropy encourages the model to assign high probabilities to correct labels, leading to better classification accuracy and more confident predictions aligned with the true data distribution.
+
+\section{Q3.7 Considering binary logistic regression model, write down its parameters (including their size) and explain how prediction is performed (including the formula for the sigmoid function). [10]}
+In binary logistic regression we model the conditional class probabilities for two classes
+$C_0$ and $C_1$ using a linear score followed by a sigmoid.
+
+\subsection*{Parameters (including sizes)}
+Assume an input feature vector $\boldsymbol x \in \mathbb{R}^{D}$.
+The model parameters are:
+\[
+\boldsymbol w \in \mathbb{R}^{D} \quad \text{(weight vector)}, 
+\qquad
+b \in \mathbb{R} \quad \text{(bias / intercept)}.
+\]
+(Equivalently, one may absorb $b$ into $\boldsymbol w$ by padding $\boldsymbol x$ with a constant $1$.)
+
+\subsection*{Prediction (including sigmoid)}
+First compute the \emph{linear part} (score / logit)
+\[
+\bar{y}(\boldsymbol x;\boldsymbol w,b) = \boldsymbol x^\top \boldsymbol w + b.
+\]
+Then apply the sigmoid function $\sigma$ to obtain a probability:
+\[
+y(\boldsymbol x;\boldsymbol w,b) = \sigma\!\left(\bar{y}(\boldsymbol x;\boldsymbol w,b)\right)
+= \sigma(\boldsymbol x^\top \boldsymbol w + b),
+\qquad
+\sigma(z) = \frac{1}{1+e^{-z}}.
+\]
+Thus the model outputs
+\[
+p(C_1 \mid \boldsymbol x) = \sigma(\boldsymbol x^\top \boldsymbol w + b),
+\qquad
+p(C_0 \mid \boldsymbol x) = 1 - p(C_1 \mid \boldsymbol x).
+\]
+
+A hard class prediction is typically obtained by thresholding the probability, e.g.
+\[
+\hat{c}=
+\begin{cases}
+C_1, & p(C_1\mid \boldsymbol x)\ge 0.5,\\
+C_0, & \text{otherwise}.
+\end{cases}
+\]
+
+{\color{gray}
+In a binary logistic regression model, the prediction \( \hat{y} \) is based on the probability that a given input \( x \) belongs to a particular class \( C_1 \), which is modeled using the logistic function \( \sigma \). The parameters of the model include:
+
+\begin{itemize}
+    \item Weight vector \( w \in \mathbb{R}^D \), where \( D \) is the number of features.
+    \item Bias \( b \in \mathbb{R} \).
+\end{itemize}
+
+The logistic regression model makes predictions using the sigmoid function \( \sigma \) applied to the linear combination of the input features and the model weights:
+
+\[
+\sigma(z) = \frac{1}{1 + e^{-z}} = \frac{e^z}{e^z + 1}
+\]
+
+Given an input \( x \), the linear part of the logistic regression model computes \( z \) as:
+
+\[
+z = x^T w + b
+\]
+
+The final prediction \( \hat{y} \) is given by:
+
+\[
+\hat{y}(x; w) = \sigma(z) = \sigma(x^T w + b)
+\]
+
+The output of the linear part \( x^T w + b \) can be interpreted as logits, which are the log odds of the probability that \( x \) belongs to class \( C_1 \) before the sigmoid transformation. Logits can take any real value, and transforming them through the sigmoid function maps them to the \((0, 1)\) interval, representing probabilities.
+}
+
+\section{Q3.8 Write down an $L^2$-regularized minibatch SGD algorithm for training a binary logistic regression model, including the explicit formulas (i.e., formulas you would need to code it in \texttt{numpy}) of the loss function and its gradient. [20]}
+To train the logistic regression, we use MLE (maximum likelihood estimation). The loss for a minibatch $\mathcal{X} = \{(\vec{x}_1, t_1), (\vec{x}_2, t_2), \ldots, (\vec{x}_N, t_N)\}$ is given by
+$$
+E({w}) = \frac{1}{N} \sum_{i} -\log(p(C_{t_i} | {x}_i; {w})) + \frac{\lambda}{2} \| {w} \|^2
+$$
+
+\subsection*{Model and sigmoid}
+\[
+p(C_1\mid \boldsymbol x;\boldsymbol w)=\sigma(\boldsymbol x^\top\boldsymbol w),
+\qquad
+\sigma(z)=\frac{1}{1+e^{-z}}.
+\]
+\subsection*{Minibatch SGD algorithm}
+\begin{algorithm}[H]
+\caption{$L^2$-regularized minibatch SGD for binary logistic regression}
+\begin{algorithmic}[1]
+\Require Input dataset $(X\in\mathbb{R}^{N\times D},\ \boldsymbol t\in\{0,1\}^N)$, learning rate $\alpha>0$, regularization $\lambda\ge 0$
+\Ensure Parameters $\boldsymbol w\in\mathbb{R}^D$
+\State $\boldsymbol w \leftarrow \boldsymbol 0$ \textbf{or} initialize $\boldsymbol w$ randomly
+\While{until convergence (or patience runs out)}
+    \State Choose a minibatch of indices $B$
+    \State $\boldsymbol g \leftarrow \frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \nabla_{w} \left(-\log(p(C_{t_i} | {x}_i; {w}))\right) + \lambda {w}$
+    \Comment{$\boldsymbol g = \frac{1}{|B|}X_B^\top(\sigma(X_B\boldsymbol w)-\boldsymbol t_B)+\lambda\boldsymbol w$}
+    \State $\boldsymbol w \leftarrow \boldsymbol w - \alpha\,\boldsymbol g$
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+{\color{gray}
+
+The parameters are updated using the SGD algorithm as follows:
+\begin{enumerate}
+  \item Initialize the weight vector $\vec{w} \leftarrow \vec{0}$ or randomly.
+  \item Repeat until convergence:
+  \begin{itemize}
+    \item Compute the gradient for a minibatch $\mathcal{B}$:
+    $$
+    \vec{g} \leftarrow \frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \nabla_{\vec{w}} \left(-\log(p(C_{t_i} | \vec{x}_i; \vec{w}))\right) + \lambda \vec{w}
+    $$
+    \item Update the weights:
+    $$
+    \vec{w} \leftarrow \vec{w} - \alpha \vec{g}
+    $$
+  \end{itemize}
+\end{enumerate}
+
+\subsection*{Logistic Regression Gradient}
+Consider the log-likelihood of logistic regression $\log p(t|\vec{x}; \vec{w})$. For brevity, we denote $\bar{y}(\vec{x}; \vec{w}) = \vec{x}^T \vec{w}$ simply as $\bar{y}$ in the following computation.
+
+Given that for $t \sim \text{Ber}(\phi)$ we have $p(t) = \phi^t (1-\phi)^{1-t}$, we can rewrite the log-likelihood as:
+
+\[
+\log p(t|\vec{x}; \vec{w}) = \log \sigma(\bar{y})^t (1 - \sigma(\bar{y}))^{1-t}
+\]
+
+This simplifies to:
+
+\[
+t \cdot \log (\sigma(\bar{y})) + (1 - t) \cdot \log (1 - \sigma(\bar{y}))
+\]
+
+The gradient of the logistic regression's likelihood with respect to the weights $\vec{w}$ is derived as follows:
+\begin{align*}
+\nabla_{\vec{w}} -\log p(t|\vec{x}; \vec{w}) &= \nabla_{\vec{w}} \left( -t \log (\sigma(\hat{y})) - (1-t) \log (1 - \sigma(\hat{y})) \right) \\
+&= \nabla_{\vec{w}} \left( -t \log (\sigma(\vec{x}^T \vec{w})) - (1-t) \log (1 - \sigma(\vec{x}^T \vec{w})) \right) \\
+&= -t \cdot \frac{1}{\sigma(\hat{y})} \cdot \nabla_{\vec{w}} \sigma(\hat{y}) + (1-t) \cdot \frac{1}{1 - \sigma(\hat{y})} \cdot \nabla_{\vec{w}} (-\sigma(\hat{y})) \\
+&= \left( -t + t \sigma(\hat{y}) + \sigma(\hat{y}) - t \sigma(\hat{y}) \right) \vec{x} \\
+&= \left( \sigma(\vec{x}^T \vec{w}) - t \right) \vec{x}
+\end{align*}
+where $\hat{y} = \vec{x}^T \vec{w}$ and the gradient of the sigmoid function $\sigma(x)$ is $\sigma(x)(1 - \sigma(x))$. The resulting gradient is used to update the weights in the SGD algorithm.
+
+Therefor the gradient of the loss function is:
+\[
+\nabla_{\vec{w}} E(\vec{w}) = \frac{1}{N} \sum_{i} \left( \sigma(\vec{x}_i^T \vec{w}) - t_i \right) \vec{x}_i + \lambda \vec{w}
+\]
+}
+
+\section{Q3.9 Compare and contrast perceptron and logistic regression by discussing: (a) what each algorithm optimizes, (b) whether each provides probability estimates, (c) whether each is guaranteed to converge, and (d) the quality of solutions each finds. [10]}
+Consider binary classification with inputs $\boldsymbol x\in\mathbb{R}^D$ and labels $t\in\{-1,+1\}$ (perceptron)
+or $t\in\{0,1\}$ (logistic regression).
+
+\subsection*{(a) What each algorithm optimizes}
+\textbf{Perceptron:} The perceptron update is mistake-driven: when an example is misclassified
+($t_i\,\boldsymbol w^\top \boldsymbol x_i \le 0$), it updates $\boldsymbol w\leftarrow \boldsymbol w+t_i\boldsymbol x_i$.
+It can be viewed as minimizing the \emph{perceptron loss}
+\[
+\ell_{\text{perc}}(\boldsymbol w; \boldsymbol x_i,t_i)=\max\{0,-t_i\,\boldsymbol w^\top \boldsymbol x_i\},
+\]
+using an online/stochastic update (it does not directly maximize a likelihood). 
+
+\textbf{Logistic regression:} Logistic regression explicitly optimizes a smooth convex objective: it minimizes the
+negative log-likelihood (cross-entropy) of a Bernoulli model (often with optional $L^2$ regularization), e.g.
+\[
+\min_{\boldsymbol w,b}\; -\sum_{i=1}^N \Bigl[t_i\log \sigma(\boldsymbol w^\top \boldsymbol x_i+b)
++(1-t_i)\log\bigl(1-\sigma(\boldsymbol w^\top \boldsymbol x_i+b)\bigr)\Bigr] + \frac{\lambda}{2}\|\boldsymbol w\|^2.
+\]
+
+\subsection*{(b) Probability estimates}
+\textbf{Perceptron:} Produces a hard decision $\operatorname{sign}(\boldsymbol w^\top \boldsymbol x+b)$; it does \emph{not}
+define calibrated probabilities.
+
+\textbf{Logistic regression:} Produces probability estimates
+\[
+p(C_1\mid \boldsymbol x)=\sigma(\boldsymbol w^\top \boldsymbol x+b),
+\qquad \sigma(z)=\frac{1}{1+e^{-z}},
+\]
+so it naturally outputs class probabilities.
+
+\subsection*{(c) Convergence guarantee}
+\textbf{Perceptron:} Guaranteed to converge in a finite number of updates \emph{only if} the data are linearly separable
+(perceptron convergence theorem). If the data are not separable, it may cycle and never converge.
+
+\textbf{Logistic regression:} The (unregularized) logistic loss is convex, so gradient-based optimization converges to a
+global minimum in the optimization sense (up to numerical tolerance) under standard conditions (e.g.\ appropriate step sizes).
+However, if the data are perfectly separable, the MLE has no finite optimum (weights can grow without bound); $L^2$
+regularization fixes this by making the objective strongly convex and ensuring a unique finite solution.
+
+\subsection*{(d) Quality of solutions}
+\textbf{Perceptron:} When separable, it finds \emph{some} separating hyperplane, but not necessarily the best one by margin
+or likelihood; the final solution depends on the order of examples and updates, and can have poor generalization.
+
+\textbf{Logistic regression:} Finds the \emph{global optimum} of the (regularized) log-likelihood / cross-entropy objective.
+This typically yields more stable solutions, better-calibrated outputs, and often better generalization than perceptron,
+especially on noisy or non-separable data.c
+
+\section{Q3.10 Explain in intuitive terms why we use the logarithm when working with likelihoods in machine learning. What are the computational and optimization advantages of using negative log-likelihood instead of directly maximizing the likelihood? [5]}
+Given i.i.d.\ data, the likelihood is a product of per-example probabilities,
+\[
+p(X;w)=\prod_{i=1}^N p(x_i;w).
+\]
+We use the logarithm because it turns this product into a sum,
+\[
+\log p(X;w)=\sum_{i=1}^N \log p(x_i;w),
+\]
+which has several advantages:
+
+\begin{itemize}
+    \item \textbf{Numerical stability:} Products of many probabilities (each $\le 1$) can underflow to zero in floating-point
+    arithmetic, especially for large $N$. Summing log-probabilities avoids underflow and is stable.
+    \item \textbf{Computational simplicity:} Sums are cheaper and easier to manipulate than products; gradients also become sums
+    over examples, which naturally supports minibatch SGD.
+    \item \textbf{Optimization convenience:} $\log(\cdot)$ is strictly increasing, so maximizing likelihood and maximizing
+    log-likelihood have the same maximizer. Minimizing the \emph{negative} log-likelihood (NLL) is equivalent but fits the
+    standard ``minimize a loss'' framework.
+    \item \textbf{Better-behaved objectives:} For many common models (e.g.\ logistic regression), the NLL is smooth and convex in
+    the parameters, making optimization more reliable than working with the raw product likelihood.
+\end{itemize}

@@ -1,0 +1,282 @@
+\part{Lecture 4}
+\section{Q4.1 Define mean squared error and show how it can be derived using MLE. What assumptions do we make during such derivation? [10]}
+
+Mean Squared Error (MSE) is commonly used as a loss function for regression problems and can be derived from Maximum Likelihood Estimation (MLE) when we assume that the target variables, \( t \), conditioned on the inputs, \( \vec{x} \), are normally distributed with a mean equal to the output of the model, \( y(\vec{x}; \vec{w}) \), and variance \( \sigma^2 \). Under this assumption, the probability distribution for \( t \) is given by \( p(t|\vec{x}; \vec{w}) = \mathcal{N}(t; y(\vec{x}; \vec{w}), \sigma^2) \).
+
+Applying MLE, we look for the parameters \( \vec{w} \) that maximize the likelihood of the observed data, which is equivalent to minimizing the negative log-likelihood. This leads to the MSE as follows:
+
+\[
+\begin{aligned}
+\vec{w}_{\text{MLE}} &= \arg \max_{\vec{w}} p(\vec{t}|\vec{X}; \vec{w}) = \arg \min_{\vec{w}} \sum_{i=1}^{N} -\log p(t_i|\vec{x}_i; \vec{w}) \\
+&= \arg \min_{\vec{w}} -\sum_{i=1}^{N} \log \left(\frac{1}{\sqrt{2\pi\sigma^2}} \exp\left(-\frac{(t_i - y(\vec{x}_i; \vec{w}))^2}{2\sigma^2}\right)\right) \\
+&= \arg \min_{\vec{w}} -N \log \left((2\pi\sigma^2)^{-\frac{1}{2}}\right) - \sum_{i=1}^{N} \frac{(t_i - y(\vec{x}_i; \vec{w}))^2}{2\sigma^2} \\
+&= \arg \min_{\vec{w}} \frac{1}{2\sigma^2} \sum_{i=1}^{N} (y(\vec{x}_i; \vec{w}) - t_i)^2.
+\end{aligned}
+\]
+
+Ignoring the constant \( \frac{1}{2\sigma^2} \), we obtain the familiar form of the MSE:
+
+\[
+E(\vec{w}) = \frac{1}{N} \sum_{i=1}^{N} (y(\vec{x}_i; \vec{w}) - t_i)^2.
+\]
+
+This derivation shows that when we assume a normal distribution for the model errors, the MLE approach naturally leads to the MSE as the loss function to be minimized.
+
+
+\section{Q4.2 Considering K-class logistic regression model, write down its parameters (including their size) and explain how we decide what classes the input data belong to (including the formula for the softmax function). [10]}
+
+To extend the binary logistic regression to a \( K \)-class case, we define the model parameters as a weight matrix \( W \in \mathbb{R}^{D \times K} \), where \( D \) is the number of features and \( K \) is the number of classes. Each column \( W_{*,i} \) corresponds to the weights associated with class \( i \).
+
+Predictions are made using the softmax function applied to the linear outputs, known as logits. For an input vector \( \vec{x} \), the logits are given by \( \vec{y}(\vec{x}; W) = W^T\vec{x} \), and the softmax function is defined as:
+\[
+\text{softmax}(\vec{z})_i = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}
+\]
+for each class \( i \), where \( \vec{z} \) is the vector of logits. 
+
+Therefore, the probability that \( \vec{x} \) belongs to class \( i \) is:
+\[
+p(C_i | \vec{x}; W) = \text{softmax}(\vec{y}(\vec{x}; W))_i = \frac{e^{\vec{x}^TW_{*,i}}}{\sum_{j=1}^{K} e^{\vec{x}^TW_{*,j}}}
+\]
+
+The linear part of the model \( \vec{x}^TW \) can be interpreted as logits because they represent the log odds before passing through the softmax function. The softmax function normalizes these log odds to probabilities that sum to one across all classes.
+
+Training a \( K \)-class logistic regression model typically involves using the cross-entropy loss function, which for a given data point \( (x_i, t_i) \) is:
+\[
+E(W) = -\sum_{i=1}^{N} \log p(C_{t_i} | \vec{x}_i; W)
+\]
+
+This loss function is minimized using optimization algorithms such as minibatch stochastic gradient descent (SGD).
+
+
+\section{Q4.3 Explain the relationship between the sigmoid function and softmax. [5]}
+
+The softmax function is a generalization of the sigmoid function to the case where there are multiple classes. For binary classification (\(K=2\)), the softmax function simplifies to the sigmoid function. Specifically, the sigmoid function is defined as:
+\[
+\sigma(x) = \frac{1}{1 + e^{-x}}
+\]
+which is the probability of a single class (e.g., class 1 in binary classification).
+
+The softmax function, which is used for multinomial logistic regression with \(K\) classes, is defined as:
+\[
+\text{softmax}(z)_i = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}}
+\]
+for each class \(i\). When \(K=2\), this reduces to:
+\[
+\text{softmax}([x, 0]) = \frac{e^x}{e^x + e^0} = \frac{1}{1 + e^{-x}}
+\]
+which is identical to the sigmoid function. Therefore, the softmax function can be seen as an extension of the sigmoid function from binary to multiclass classification, where the output for each class is the normalized exponential function of the logits, ensuring that the class probabilities sum to one.
+
+The sigmoid function thus can be represented as a softmax function applied to a vector with two elements, where one element is the logit \(x\) and the other is zero. This connection shows the versatility of softmax as a multi-class sigmoid function.
+
+\section{Q4.4 Show that the softmax function is invariant towards constant shift. [5]}
+
+The main idea is that the term $e^c$ gets canceled out.
+
+$\text{softmax}(z_i + c) = \frac{e^{z_i + c}}{\sum_{j=1}^n e^{z_j + c}} = \frac{e^{z_i} e^{c}}{\sum_{j=1}^n e^{z_j} e^{c}} = \frac{e^{z_i}}{\sum_{j=1}^n e^{z_j}} = \text{softmax}(z_i)$
+
+\section{Q4.5 Write down an $L^2$-regularized minibatch SGD algorithm for training a K-class logistic regression model, including the explicit formulas (i.e., formulas you would use to code it in \texttt{numpy}) of the loss function and its gradient. [20]}
+To train a \( K \)-class logistic regression model, we use the minibatch stochastic gradient descent (SGD) with L2 regularization. The loss function is the regularized negative log-likelihood, and the gradient takes into account the regularization term.
+
+\subsection*{Minibatch SGD algorithm}
+\begin{algorithm}[H]
+\caption{$L^2$-regularized minibatch SGD for $K$-class logistic regression}
+\begin{algorithmic}[1]
+\State \textbf{Input:} Input dataset $(X\in\mathbb{R}^{N\times D},\ t\in\{0,1,\dots,K-1\}^N)$, learning rate $\alpha\in\mathbb{R}^+$, regularization $\lambda\ge 0$
+\State \textbf{Model:} Let $w$ denote all parameters of the model (here $w=(W,b)$ with $W\in\mathbb{R}^{D\times K}$, $b\in\mathbb{R}^K$)
+\State $w \leftarrow 0$ \textbf{or} initialize $w$ randomly
+\While{until convergence (or patience runs out)}
+    \State process a minibatch of examples $\mathcal{B}$
+    \State $g \leftarrow \nabla_w \mathcal{L}_{\mathcal{B}}(w)$
+    \Comment{$\mathcal{L}_{\mathcal{B}}(w)= -\frac{1}{|\mathcal{B}|}\sum_{i\in\mathcal{B}}\log(p(C_{t_i}\mid \boldsymbol x_i;w)) + \frac{\lambda}{2}\|W\|_F^2$}
+    \State $w \leftarrow w - \alpha g$
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+\subsection*{Loss Function}
+The regularized loss function for a minibatch \( \mathcal{B} \) is:
+\[
+E(\mathbf{W}) = -\frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} \log(p(C_{t_i} | \mathbf{x}_i; \mathbf{W})) + \frac{\lambda}{2} \|\mathbf{W}\|^2_F
+\]
+where \( \|\mathbf{W}\|^2_F \) is the Frobenius norm of \( \mathbf{W} \), representing the L2 regularization term.
+
+\subsection*{Gradient}
+The gradient of the loss function with L2 regularization is:
+\[
+\nabla_{\mathbf{W}} E(\mathbf{W}) = -\frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} x_i(softmax(x_i^T \mathbf{W}) - 1_t)^T + \lambda \mathbf{W}
+\]
+Note that $1_t$ is a one-hot vector with a 1 in the position corresponding to the target class $t$.
+
+
+\section{Q4.6 Prove that decision regions of a multiclass logistic regression are convex. [10]}
+
+To prove the convexity of decision regions in multiclass logistic regression, consider two points \( x_A \) and \( x_B \) in the same decision region \( R_k \). The decision criterion for logistic regression is based on the linear functions \( x^T W \), where \( W \) is the weight matrix. A point \( x \) is in region \( R_k \) if and only if
+
+\[ \hat{y}(x)_k = x^T W_k \]
+
+is the largest among all class scores. For two points \( x_A, x_B \in R_k \), and any \( \lambda \in [0, 1] \), their convex combination \( x = \lambda x_A + (1 - \lambda)x_B \) also satisfies
+
+\[ \hat{y}(x)_k = \lambda \hat{y}(x_A)_k + (1 - \lambda)\hat{y}(x_B)_k \]
+
+Given that both \( \hat{y}(x_A)_k \) and \( \hat{y}(x_B)_k \) are the largest scores for their respective points, \( \hat{y}(x)_k \) will also be the largest score for the convex combination, placing \( x \) in \( R_k \). This holds for any convex combination of points in \( R_k \), thus \( R_k \) is convex.
+
+
+\section{Q4.7 Considering a single-layer MLP with $D$ input neurons, $H$ hidden neurons, $K$ output neurons, hidden activation $f$, and output activation $a$, list its parameters (including their size) and write down how the output is computed. [10]}
+
+A single-layer Multilayer Perceptron (MLP) with \( D \) input neurons, \( H \) hidden neurons, and \( K \) output neurons, uses the following parameters:
+
+\begin{itemize}
+    \item Hidden layer weights \( W^{(h)} \in \mathbb{R}^{D \times H} \)
+    \item Hidden layer biases \( b^{(h)} \in \mathbb{R}^{H} \)
+    \item Output layer weights \( W^{(y)} \in \mathbb{R}^{H \times K} \)
+    \item Output layer biases \( b^{(y)} \in \mathbb{R}^{K} \)
+\end{itemize}
+\begin{algorithm}[H]
+\caption{Forward pass of a 1-hidden-layer MLP}
+\begin{algorithmic}[1]
+\Require Hidden activation $f(\cdot)$, output activation $a(\cdot)$
+\Require Hidden parameters $W^{(h)}\in\mathbb{R}^{D\times H}$, $b^{(h)}\in\mathbb{R}^{H}$
+\Require Output parameters $W^{(y)}\in\mathbb{R}^{H\times K}$, $b^{(y)}\in\mathbb{R}^{K}$
+
+\Statex \textbf{Single input $\boldsymbol x\in\mathbb{R}^{D}$:}
+\State $\boldsymbol h \leftarrow f(\boldsymbol x^\top W^{(h)} + b^{(h)})$ \Comment{Hidden layer activations, $\in\mathbb{R}^{H}$}
+\State $\boldsymbol y \leftarrow a(\boldsymbol h^\top W^{(y)} + b^{(y)})$ \Comment{ Output predictions, $\in\mathbb{R}^{K}$}
+
+\Statex \textbf{Batch input $X\in\mathbb{R}^{N\times D}$:}
+\State $\mathbf{1} \leftarrow (1,\dots,1)^\top \in\mathbb{R}^{N}$ \Comment{all-ones column vector}
+\State $H \leftarrow f(X W^{(h)} + \mathbf{1}(b^{(h)})^\top)$ \Comment{Batch hidden layer activations, $H\in\mathbb{R}^{N\times H}$}
+\State $Y \leftarrow a(H W^{(y)} + \mathbf{1}(b^{(y)})^\top)$ \Comment{Batch output predictions, $Y\in\mathbb{R}^{N\times K}$}
+
+\end{algorithmic}
+\end{algorithm}
+
+\section{Q4.8 List the definitions of frequently used MLP output layer activations (the ones producing parameters of a Bernoulli distribution and a categorical distribution). Then write down three commonly used hidden layer activations (sigmoid, tanh, ReLU). Explain why identity is not a suitable activation for hidden layers. [10]}
+
+\subsection*{Output Layer Activations}
+\begin{itemize}
+    \item \textbf{Identity (Regression):} \( \text{identity}(x) = x \)
+    \item \textbf{Sigmoid (Binary Classification):} \( \sigma(x) = \frac{1}{1 + e^{-x}} \)
+    \item \textbf{Softmax (K-class Classification):} \( \text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j} e^{x_j}} \)
+\end{itemize}
+
+\subsection*{Hidden Layer Activations}
+\begin{itemize}
+    \item \textbf{Sigmoid:} \( \sigma(x) = \frac{1}{1 + e^{-x}} \)
+    \item \textbf{Tanh:} \( \tanh(x) = \frac{e^{x} - e^{-x}}{e^{x} + e^{-x}} = 2\sigma(2x)-1\)
+    \item \textbf{ReLU:} \( \text{ReLU}(x) = \max(0, x) \)
+\end{itemize}
+
+\subsection*{Why identity is not a suitable activation for hidden layers}
+
+If the hidden-layer activation is the identity $f(z)=z$, then a multilayer perceptron collapses to a single linear (affine)
+model, i.e., it cannot represent nonlinear functions.
+
+Consider a 1-hidden-layer network:
+\[
+\boldsymbol h = f\!\left((W^{(h)})^\top \boldsymbol x + \boldsymbol b^{(h)}\right)
+= (W^{(h)})^\top \boldsymbol x + \boldsymbol b^{(h)}.
+\]
+With a linear output layer,
+\[
+\boldsymbol y = (W^{(y)})^\top \boldsymbol h + \boldsymbol b^{(y)}.
+\]
+Substituting $\boldsymbol h$ gives
+\[
+\boldsymbol y
+= (W^{(y)})^\top\!\left((W^{(h)})^\top \boldsymbol x + \boldsymbol b^{(h)}\right) + \boldsymbol b^{(y)}
+= \underbrace{\bigl(W^{(h)}W^{(y)}\bigr)^\top}_{\text{single matrix}} \boldsymbol x
++ \underbrace{\left((W^{(y)})^\top \boldsymbol b^{(h)} + \boldsymbol b^{(y)}\right)}_{\text{single bias}}.
+\]
+This is just an affine function of $\boldsymbol x$. More generally, a composition of affine maps is still affine, so adding
+more identity-activated hidden layers does not increase representational power.
+
+\paragraph{Consequence.}
+Using identity in hidden layers prevents the network from learning nonlinear representations and makes depth useless: the
+model is equivalent to a single-layer linear model (linear regression / linear classifier) in the original input space.
+
+\section{Q4.9 Explain the role of initialization in training MLPs. Why is it problematic to initialize all weights to zero? What is a common strategy for random initialization, and why does it typically scale with the input dimension? [10]}
+\subsection*{Role of initialization}
+Training an MLP with (mini)batch SGD is a nonconvex optimization problem, so the initial weights define the starting point
+of the optimization and strongly influence whether and how fast SGD makes progress. In particular, initialization determines
+the initial hidden features (the hidden layer can be viewed as ``automatically constructed features'').
+
+\subsection*{Why initializing all weights to zero is problematic}
+If we initialize all weights in a layer to the same value (especially all zeros), then all hidden neurons in that layer are
+\emph{symmetric}: they produce identical activations for every input and also receive identical gradients. Therefore, after
+each update they remain identical, meaning the network cannot learn diverse hidden features (it effectively behaves as if it
+had only one hidden unit repeated multiple times). Hence, the weights in an MLP must be initialized randomly to break this
+symmetry.
+
+\subsection*{Common random initialization and why it scales with input dimension}
+A common strategy is:
+\begin{itemize}
+    \item initialize biases to $0$;
+    \item initialize each weight matrix randomly; for a matrix mapping a layer of size $M$ to a layer of size $O$, sample
+    entries e.g.\ uniformly from a small interval such as
+    \[
+    W_{ij} \sim \mathcal{U}\!\left[-\frac{1}{M},\frac{1}{M}\right].
+    \]
+\end{itemize}
+
+The scaling with the input dimension (fan-in) $M$ is motivated by magnitude/variance control: a pre-activation is a sum of
+$M$ terms, $z=\sum_{j=1}^{M} x_j w_j$, so its variance typically grows with $M$ unless the weights get smaller as $M$
+increases. Choosing the weight scale to decrease with $M$ keeps activations (and thus gradients) in a reasonable range,
+reducing the risk of saturation/exploding values; the exact range becomes especially important for deeper networks.
+
+\section{Q4.10 You have trained two models on the same dataset: (1) logistic regression and (2) a multilayer perceptron with one hidden layer of 100 neurons. The MLP achieves 95\% training accuracy while logistic regression achieves 85\%. However, both achieve 84\% test accuracy. Interpret these results and explain what they suggest about the models and the data. [5]}
+Logistic regression is a \emph{lower-capacity} (linear) model, while an MLP with a hidden layer of 100 neurons has
+\emph{much higher capacity} and can represent more complex (nonlinear) decision boundaries.
+
+Here, the MLP reaches $95\%$ training accuracy but only $84\%$ test accuracy, i.e.\ it has a large
+\textbf{generalization gap} ($95-84=11$ percentage points). This indicates \textbf{overfitting}:
+the MLP is fitting patterns specific to the training set (including noise or incidental correlations) that do not hold on
+unseen data.
+
+Logistic regression achieves $85\%$ training accuracy and $84\%$ test accuracy, i.e.\ a very small gap. This suggests it is
+not strongly overfitting; rather, its limited capacity prevents it from fitting the training set much beyond the test
+performance.
+
+Because \emph{both} models achieve essentially the same test accuracy ($84\%$), the results suggest that:
+\begin{itemize}
+    \item the additional capacity of the MLP does \emph{not} translate into better generalization on this dataset as trained;
+    \item either (i) the true decision boundary is close to linear / the features are not rich enough to benefit from
+    nonlinearity, or (ii) the dataset contains substantial noise / limited data so the achievable test accuracy is capped;
+    \item improving the MLP would likely require stronger regularization (e.g.\ weight decay), early stopping, or other
+    capacity control to reduce overfitting.
+\end{itemize}
+
+\section{Q4.11 You are supposed to train an MLP for regression that has several numeric features as the input. How would you preprocess them? Specifically, would you use polynomial features? Explain your decision. [5]}
+\subsection*{Preprocessing of numeric features}
+For an MLP trained with (mini)batch SGD, it is important that input features have comparable scales; otherwise different
+features effectively require different learning rates and optimization becomes poorly conditioned. A common solution is to
+\textbf{normalize/standardize} each feature dimension using statistics computed on the \emph{training} set and then apply the
+same transform to validation/test data. 
+
+Typical options (feature-wise, for feature $j$):
+\begin{itemize}
+    \item \textbf{Standardization (zero mean, unit variance):}
+    \[
+    x^{\text{stand}}_{i,j}=\frac{x_{i,j}-\mu^j}{\sigma^j}.
+    \]
+    \item \textbf{Min--max normalization:}
+    \[
+    x^{\text{norm}}_{i,j}=\frac{x_{i,j}-\min_k x_{k,j}}{\max_k x_{k,j}-\min_k x_{k,j}}.
+    \]
+\end{itemize}
+(Optionally, also handle missing values/outliers before scaling.)
+
+\subsection*{Would I use polynomial features?}
+Usually \textbf{no}. Polynomial features are mainly a form of \emph{feature engineering} used to increase the capacity of
+\emph{linear} models, i.e., when the algorithm cannot represent nonlinear functions on its own. 
+In contrast, an MLP already creates nonlinear features internally: the mapping into the hidden layer can be viewed as
+\emph{automatically constructed features} (linear transform followed by a nonlinearity).
+
+Adding polynomial expansions to an MLP typically:
+\begin{itemize}
+    \item increases input dimensionality and training cost,
+    \item increases effective capacity and can worsen overfitting,
+    \item is redundant because nonlinear interactions can be learned by hidden units.
+\end{itemize}
+
+I would only consider polynomial features if I had strong domain knowledge about specific interactions and wanted to inject
+them explicitly (or if the model were intentionally constrained to be nearly linear).

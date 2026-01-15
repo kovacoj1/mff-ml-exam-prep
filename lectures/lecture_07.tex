@@ -1,0 +1,197 @@
+\part{Lecture 7}
+
+\section{Q7.1 Describe $k$-nearest neighbors prediction, both for regression and classification. Define $L_p$ norm and describe uniform, inverse, and softmax weighting. [10]}
+
+\subsection*{Regression}
+For regression, k-NN predicts the target value by a weighted average of the targets of the k nearest neighbors:
+\[ t = \frac{\sum_{i} w_i \cdot t_i}{\sum_{j} w_j} \]
+
+\subsection*{Classification}
+For classification, k-NN uses voting among the k nearest neighbors. For uniform weights:
+\[ \text{class} = \text{mode}\{t_1, t_2, \ldots, t_k\} \]
+With non-uniform weights, the predicted class maximizes the weighted sum of targets:
+\[ \text{class} = \arg\max \sum_{i} w_i \cdot t_{i,k} \]
+
+\subsection*{Lp-norm}
+The \( L_p \)-norm is defined as:
+\[ \lVert x - y \rVert_p = \left( \sum_{i=1}^{D} |x_i - y_i|^p \right)^{1/p} \]
+
+\subsection*{Weighting Methods}
+\begin{itemize}
+    \item Uniform: \( w_i = 1 \)
+    \item Inverse: \( w_i = \frac{1}{\text{distance}(x, x_i)} \)
+    \item Softmax: \( w_i = \frac{\exp(-\text{distance}(x, x_i))}{\sum_j \exp(-\text{distance}(x, x_j))} \)
+\end{itemize}
+
+\section{Q7.2 Show that $L^2$-regularization can be obtained from a suitable prior by Bayesian inference (from the MAP estimate). [10]}
+
+Assuming a Gaussian prior for model parameters $\mathbf{w}$ with zero mean and variance $\sigma^2$, the prior distribution is given as $p(\mathbf{w}_i) = \mathcal{N}(\mathbf{w}_i; 0, \sigma^2)$. Consequently, the prior over all weights $\mathbf{w}$ is $p(\mathbf{w}) = \prod_{i=1}^N \mathcal{N}(\mathbf{w}_i; 0, \sigma^2) = \mathcal{N}(\mathbf{w}; 0, \sigma^2 \mathbf{I})$. The maximum a posteriori (MAP) estimation is then:
+
+\begin{align*}
+\mathbf{w}_{\text{MAP}} &= \arg \max_{\mathbf{w}} p(\mathbf{X} | \mathbf{w})p(\mathbf{w}) \\
+&= \arg \max_{\mathbf{w}} \prod_{i=1}^N p(\mathbf{x}_i | \mathbf{w})p(\mathbf{w}) \\
+&= \arg \min_{\mathbf{w}} \sum_{i=1}^N \left( -\log p(\mathbf{x}_i | \mathbf{w}) - \log p(\mathbf{w}) \right).
+\end{align*}
+
+Incorporating the Gaussian prior probability, we get the L2-regularized objective:
+
+\begin{align*}
+\mathbf{w}_{\text{MAP}} &= \arg \min_{\mathbf{w}} \left[ \sum_{i=1}^N -\log p(\mathbf{x}_i | \mathbf{w}) + \frac{D}{2} \log(2\pi\sigma^2) + \frac{\| \mathbf{w} \|^2}{2\sigma^2} \right],
+\end{align*}
+
+which is the L2-regularization term.
+
+\section{Q7.3 Write down how $p(C_k|x)$ is approximated in a Naive Bayes classifier, explicitly state the Naive Bayes assumption, and show how is the prediction performed. [10]}
+
+The Naive Bayes classifier approximates the conditional probability \( p(C_k | x) \) using Bayes' theorem and the naive independence assumption. This assumption states that all features \( x_d \) are independent given the class \( C_k \). Therefore, the joint probability of the feature vector \( x \) given the class \( C_k \) can be expressed as the product of individual probabilities:
+
+\[
+p(x \mid C_k) = \prod_{d=1}^{D} p(x_d \mid C_k).
+\]
+
+Using Bayes' theorem, the posterior probability for class \( C_k \) given the feature vector \( x \) is then:
+
+\[
+p(C_k \mid x) = \frac{p(x \mid C_k) p(C_k)}{p(x)},
+\]
+
+where \( p(x) \) is the evidence term, typically ignored during prediction as it remains constant across all classes.
+
+The prediction for a new sample \( x \) is performed by choosing the class \( C_k \) that maximizes this posterior probability:
+
+\[
+\hat{C} = \arg\max_k p(C_k \mid x) = \arg\max_k \left( \prod_{d=1}^{D} p(x_d \mid C_k) \right) p(C_k).
+\]
+
+This approach allows for efficient computation and prediction in high-dimensional feature spaces.
+
+\section{Q7.4 Considering a Gaussian naive Bayes, describe how are $p(x_d|C_k)$ modeled (what distribution and which parameters does it have) and how we estimate it during fitting. [10]}
+
+In Gaussian Naive Bayes, the conditional probability \( p(x_d \mid C_k) \) for a continuous feature \( x_d \) given a class \( C_k \) is modeled by a normal distribution:
+
+\[
+p(x_d \mid C_k) = \mathcal{N}(x_d \mid \mu_{d,k}, \sigma_{d,k}^2).
+\]
+
+The parameters \( \mu_{d,k} \) and \( \sigma_{d,k}^2 \) of this distribution are estimated from the training data using maximum likelihood estimation (MLE). For each feature \( d \) and class \( k \), the MLE of the mean \( \mu_{d,k} \) is computed as:
+
+\[
+\mu_{d,k} = \frac{1}{N_k} \sum_{i=1}^{N_k} x_{i,d},
+\]
+
+where \( x_{i,d} \) is the \( i \)-th training sample of feature \( d \) that belongs to class \( C_k \), and \( N_k \) is the number of samples in class \( C_k \).
+
+The variance \( \sigma_{d,k}^2 \) is estimated as:
+
+\[
+\sigma_{d,k}^2 = \frac{1}{N_k} \sum_{i=1}^{N_k} (x_{i,d} - \mu_{d,k})^2.
+\]
+
+In practice, to avoid the issue of zero variance, a smoothing term \( \alpha \) is often added to the variance estimate:
+
+\[
+\sigma_{d,k}^2 = \frac{1}{N_k + \alpha} \sum_{i=1}^{N_k} (x_{i,d} - \mu_{d,k})^2 + \alpha.
+\]
+
+The smoothing term \( \alpha \) is a hyperparameter that can be tuned using cross-validation.
+
+\section{Q7.5 Considering a Bernoulli naive Bayes, describe how are $p(x_d | C_k)$ modeled (what distribution and which parameters does it have) and how we estimate it during fitting. [10]}
+
+In Bernoulli Naive Bayes, the probability of a binary feature \( x_d \) given a class \( C_k \), denoted as \( p(x_d | C_k) \), is modeled using a Bernoulli distribution with parameter \( p_{d,k} \). This parameter represents the probability of feature \( d \) being present in a sample of class \( C_k \).
+
+\[
+p(x_d \mid C_k) = p_{d,k}^{x_d} \cdot (1 - p_{d,k})^{(1-x_d)}.
+\]
+
+The likelihood of class \( C_k \) given the feature vector \( x \) is then:
+
+\[
+p(C_k \mid x) \propto \left( \prod_{d=1}^{D} p_{d,k}^{x_d} \cdot (1 - p_{d,k})^{(1-x_d)} \right) p(C_k),
+\]
+
+where \( D \) is the number of binary features.
+
+Taking the logarithm, we obtain:
+
+\[
+\log p(C_k \mid x) + c = \log p(C_k) + \sum_{d} \left( x_d \log {\frac{p_{d,k}}{1 - p_{d,k}}} + \log(1 - p_{d,k}) \right) = b_k + x^T w_k,
+\]
+
+where \( c \) is a constant that does not depend on \( C_k \) and is not needed for prediction.
+
+The prediction is made by:
+
+\[
+\arg \max_k \log p(C_k \mid x) = \arg \max_k b_k + x^T w_k.
+\]
+
+The parameter \( p_{d,k} \) is estimated during training as the relative frequency of the feature \( d \) in samples of class \( C_k \):
+
+\[
+p_{d,k} = \frac{1}{N_k} \sum_{i=1}^{N_k} x_{i,d},
+\]
+
+where \( x_{i,d} \) is the presence or absence of feature \( d \) in the \( i \)-th sample, and \( N_k \) is the total number of samples in class \( C_k \).
+
+To prevent zero probabilities and to handle unseen features in the training data, smoothing is applied. The smoothed estimate for \( p_{d,k} \) with Laplace smoothing is:
+
+\[
+p_{d,k} = \frac{\sum_{i=1}^{N_k} x_{i,d} + \alpha}{N_k + 2\alpha},
+\]
+
+where \( \alpha \) is a smoothing parameter, typically set to 1.
+
+\section{Q7.6 What measures can we take to prevent numeric instabilities in the Naive Bayes classifier, particularly if the probability density is too high in Gaussian Naive Bayes and there are zero probabilities in Bernoulli Naive Bayes? [10]}
+\paragraph{General numerical stability (all Naive Bayes variants).}
+Instead of multiplying many probabilities (which underflows/overflows),
+compute posteriors in the \emph{log-domain}:
+\[
+\log p(C_k \mid \mathbf{x}) = \log p(C_k) + \sum_{d=1}^{D} \log p(x_d \mid C_k) + \text{const},
+\]
+and predict
+\[
+\hat{k} = \arg\max_k \left[\log p(C_k) + \sum_{d=1}^{D} \log p(x_d \mid C_k)\right].
+\]
+(Optionally, if normalized probabilities are needed, use a log-sum-exp normalization.)
+
+\paragraph{Gaussian Naive Bayes: avoid too sharp Gaussians (too high density).}
+In Gaussian NB, very small estimated variances \(\sigma_{d,k}^2\) make the normal density extremely peaked,
+which can cause numerical issues. A standard fix is \emph{variance smoothing}:
+\[
+\sigma_{d,k}^2 \leftarrow \sigma_{d,k}^2 + \alpha,
+\]
+for a small \(\alpha>0\) (often chosen relative to the overall feature variances), which prevents
+\(\sigma_{d,k}^2\) from becoming too small and stabilizes the likelihood computation.
+
+\paragraph{Bernoulli Naive Bayes: avoid zero/one probabilities.}
+If a binary feature is always \(1\) (or always \(0\)) in class \(C_k\), the MLE gives \(p_{d,k}=1\) (or \(0\)),
+which makes some test examples get probability \(0\) and yields \(\log 0\).
+Use \emph{Laplace/additive smoothing} (a pseudo-count \(\alpha>0\)):
+\[
+p_{d,k} \;=\; \frac{n_{d,k} + \alpha}{N_k + 2\alpha},
+\]
+where \(n_{d,k}\) is the number of training examples in class \(k\) with feature \(d=1\),
+and \(N_k\) is the number of training examples in class \(k\).
+This guarantees \(0 < p_{d,k} < 1\) and removes zero probabilities.
+
+\section{Q7.7 What is the difference between discriminative and (classical) generative models? [5]}
+\paragraph{Discriminative models.}
+Discriminative models learn \emph{the decision rule directly}, i.e.\ they model the conditional distribution
+\[
+p(y \mid \mathbf{x})
+\]
+(or an equivalent scoring function for predicting \(y\) from \(\mathbf{x}\)).
+They focus on separating classes and do not need to model how the features \(\mathbf{x}\) are generated.
+
+\paragraph{(Classical) generative models.}
+Classical generative models learn a model of how data are produced: they model the class prior and the
+class-conditional distribution,
+\[
+p(y) \quad\text{and}\quad p(\mathbf{x}\mid y),
+\]
+so that the posterior used for classification is obtained via Bayes' rule:
+\[
+p(y\mid \mathbf{x}) \propto p(y)\,p(\mathbf{x}\mid y).
+\]
+Because they model \(p(\mathbf{x}\mid y)\), they can (in principle) also \emph{generate} or score samples
+\(\mathbf{x}\) given a class \(y\).

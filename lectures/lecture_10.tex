@@ -1,0 +1,245 @@
+\part{Lecture 10}
+
+\section{Q10.1 Explain the main differences between random forests and gradient-boosted decision trees. [5]}
+
+Random forests and gradient-boosted decision trees (GBDT) are both ensemble learning methods that combine multiple decision trees, but they differ in how they build and combine these trees. In random forests, trees are built independently, with each tree trained on a random subset of the data and features, and their predictions are averaged (for regression) or voted on (for classification) to produce the final result. This approach reduces variance by averaging out errors from individual trees. In contrast, GBDT builds trees sequentially, where each new tree is trained to correct the errors (residuals) made by the previous trees. The predictions of all trees are combined through weighted sums, where the final result is more sensitive to recent corrections. GBDT often yields better predictive performance but is more prone to overfitting and computationally more expensive compared to random forests.
+
+\section{Q10.2 Explain the intuition for second-order optimization using Newton's root-finding method or Taylor expansions. [10]}
+\paragraph{Intuition via Newton's root-finding.}
+Newton's method was originally designed to find a root of a 1D function \(f:\mathbb{R}\to\mathbb{R}\).
+At the current point \(x\), we approximate \(f\) by its \emph{tangent line}:
+\[
+f(x') \approx f(x) + f'(x)(x'-x).
+\]
+We then choose \(x'\) so that this linear approximation becomes zero, i.e.\ \(f(x')\approx 0\), which yields the update
+\[
+x' = x - \frac{f(x)}{f'(x)}.
+\]
+To find a \emph{minimum} of \(f\), we can instead find a root of the derivative \(f'(x)=0\). Applying the same idea to \(f'\) gives
+\[
+x' = x - \frac{f'(x)}{f''(x)}.
+\]
+This is a \textbf{second-order} update because it uses the second derivative (curvature),
+
+\paragraph{Intuition via a second-order Taylor approximation.}
+Near \(x\), the function can be approximated by a quadratic (parabola):
+\[
+f(x+\varepsilon) \approx f(x) + \varepsilon f'(x) + \frac{1}{2}\varepsilon^2 f''(x).
+\]
+Instead of taking a small fixed step like gradient descent, we \emph{minimize this local quadratic model}.
+Differentiate w.r.t.\ \(\varepsilon\) and set to zero:
+\[
+0 \approx \frac{\partial}{\partial \varepsilon}\Bigl(f(x)+\varepsilon f'(x)+\tfrac12 \varepsilon^2 f''(x)\Bigr)
+= f'(x) + \varepsilon f''(x),
+\]
+so
+\[
+\varepsilon^* = -\frac{f'(x)}{f''(x)}, \qquad x' = x+\varepsilon^* = x - \frac{f'(x)}{f''(x)}.
+\]
+Thus Newton's method is: \emph{fit a local parabola and jump directly to its minimum}.
+
+\paragraph{Why second-order information helps (main idea).}
+The second derivative \(f''(x)\) tells us how \emph{steep/flat} the function is locally:
+\begin{itemize}
+  \item if curvature is large (\(f''(x)\) big), Newton takes a smaller step;
+  \item if curvature is small (\(f''(x)\) small), Newton takes a larger step.
+\end{itemize}
+So it behaves like gradient descent with an \emph{adaptive learning rate} \(1/f''(x)\), often converging in far fewer steps near an optimum.
+
+\paragraph{Multivariate form (for completeness).}
+For \(f:\mathbb{R}^D\to\mathbb{R}\), the quadratic approximation uses the Hessian \(H\), giving the Newton step
+\[
+\mathbf{w} \leftarrow \mathbf{w} - H(\mathbf{w})^{-1}\nabla f(\mathbf{w}),
+\]
+i.e.\ we precondition the gradient by the inverse curvature matrix. 
+
+\section{Q10.3 Write down the loss function that we optimize in gradient-boosted decision trees while constructing $t$ tree. Then, define $g_i$ and $h_i$ and show the value $w_{\tau}$ of optimal prediction in node $\tau$ and the criterion used during node splitting. Explain how the loss formulation relates to Taylor's expansions. [20]}
+We use an additive model
+\[
+y(x_i) = \sum_{j=1}^{T} y_j(x_i; w_j),
+\]
+where \(w_j\) are the (leaf-value) parameters of tree \(j\).
+
+\paragraph{Objective while constructing the \(t\)-th tree.}
+When trees \(1,\dots,t-1\) are fixed, we optimize only \(w_t\):
+\[
+E^{(t)}(w_t; w_{1..t-1})
+= \sum_i \ell\!\Bigl(t_i,\; y^{(t-1)}(x_i) + y_t(x_i; w_t)\Bigr)
++ \frac{\lambda}{2}\|w_t\|^2,
+\]
+where \(y^{(t-1)}(x_i)=\sum_{j=1}^{t-1} y_j(x_i; w_j)\).
+
+\paragraph{Second-order (Taylor) approximation and definitions of \(g_i, h_i\).}
+Let \(y\) denote the current prediction argument of the loss. Define
+\[
+g_i
+= \left.\frac{\partial \ell(t_i, y)}{\partial y}\right|_{y = y^{(t-1)}(x_i)},
+\qquad
+h_i
+= \left.\frac{\partial^2 \ell(t_i, y)}{\partial y^2}\right|_{y = y^{(t-1)}(x_i)}.
+\]
+Using a second-order Taylor expansion of \(\ell(t_i, y^{(t-1)}(x_i)+y_t(x_i))\) around \(y^{(t-1)}(x_i)\),
+\[
+\ell\!\Bigl(t_i, y^{(t-1)}(x_i)+y_t(x_i)\Bigr)
+\approx
+\ell\!\Bigl(t_i, y^{(t-1)}(x_i)\Bigr)
++ g_i\, y_t(x_i)
++ \frac{1}{2} h_i\, y_t(x_i)^2.
+\]
+Dropping the constant term \(\sum_i \ell(t_i, y^{(t-1)}(x_i))\), the approximate objective is
+\[
+\tilde E^{(t)}(w_t)
+\approx
+\sum_i \left[g_i\, y_t(x_i) + \frac{1}{2} h_i\, y_t(x_i)^2\right]
++ \frac{\lambda}{2}\|w_t\|^2
++ \text{const}.
+\]
+
+\paragraph{Leaf/node form and optimal \(w_\tau\).}
+Let \(\tau\) be a leaf (node) of tree \(t\), \(I_\tau\) the indices of examples in \(\tau\), and let the tree predict a constant
+\(w_\tau\) in that leaf, i.e. \(y_t(x_i)=w_\tau\) for all \(i\in I_\tau\).
+Then
+\[
+\tilde E^{(t)}(w_t)
+\approx
+\sum_{\tau}\left[
+\left(\sum_{i\in I_\tau} g_i\right) w_\tau
++ \frac{1}{2}\left(\sum_{i\in I_\tau} h_i\right) w_\tau^2
+\right]
++ \frac{\lambda}{2}\sum_{\tau} w_\tau^2
++ \text{const}.
+\]
+Taking derivative w.r.t. \(w_\tau\) and setting to zero gives the optimal leaf value
+\[
+w_\tau^\ast
+=
+-\frac{\sum_{i\in I_\tau} g_i}{\lambda + \sum_{i\in I_\tau} h_i}.
+\]
+
+\paragraph{Splitting criterion (gain / best split).}
+Define the aggregated statistics in a node \(\tau\):
+\[
+G_\tau = \sum_{i\in I_\tau} g_i, \qquad H_\tau = \sum_{i\in I_\tau} h_i.
+\]
+Substituting \(w_\tau^\ast\) back into the approximate objective yields the (minimum reachable) score
+\[
+\tilde E^{(t)}(w^\ast)
+\approx
+-\frac{1}{2}\sum_{\tau}\frac{G_\tau^2}{\lambda + H_\tau} + \text{const}.
+\]
+Therefore, when considering a split of a node \(\tau\) into \(\tau_L,\tau_R\), the improvement (gain) is
+\[
+\mathrm{Gain}
+=
+\frac{1}{2}\left(
+\frac{G_{\tau_L}^2}{\lambda+H_{\tau_L}}
++
+\frac{G_{\tau_R}^2}{\lambda+H_{\tau_R}}
+-
+\frac{G_{\tau}^2}{\lambda+H_{\tau}}
+\right),
+\]
+and CART-style training chooses the split maximizing \(\mathrm{Gain}\)
+(equivalently minimizing the post-split value of the approximate loss).
+
+\paragraph{How this relates to Taylor expansions.}
+The whole construction comes from replacing the true loss (after adding tree \(t\)) by its \emph{second-order Taylor approximation}
+around the current ensemble prediction \(y^{(t-1)}(x_i)\). The coefficients \(g_i\) and \(h_i\) are exactly the first and second
+derivatives of the loss at that point, so the split criterion is derived from minimizing a local quadratic model of the loss.
+
+\section{Q10.4 List and explain three common techniques used in gradient boosting (beyond the basic algorithm) for preventing overfitting. [10]}
+Gradient boosting can overfit because later trees may start correcting \emph{noise} in the training set.
+Common regularization techniques used in practice are:
+
+\begin{itemize}
+  \item \textbf{Data subsampling (stochastic gradient boosting / bagging):}
+  when training a tree, use only a random fraction of the training instances (often around $0.5$) or a bootstrapped sample.
+  This injects randomness, reduces correlation between trees, and lowers variance (less tendency to fit training-specific noise).
+
+  \item \textbf{Feature subsampling:}
+  when building a tree (or when evaluating splits), consider only a random subset of input features.
+  This again decorrelates trees and prevents the ensemble from repeatedly exploiting the same strong-but-spurious predictors.
+
+  \item \textbf{Shrinkage (learning rate):}
+  after fitting a tree, scale its contribution by a learning rate $\alpha$:
+  \[
+    y^{(t)}(x) = y^{(t-1)}(x) + \alpha\, y_t(x).
+  \]
+  Smaller $\alpha$ makes each tree have a weaker effect, so the model improves more gradually and leaves ``room'' for future trees,
+  which typically improves generalization (at the cost of needing more trees).
+\end{itemize}
+
+\section{Q10.5 For binary classification with gradient boosted decision trees, write down how the prediction is computed and define the per-example loss function. [10]}
+
+In gradient boosting, the trees predict the \emph{linear score} (logit)
+\[
+y(x_i) \;=\; \sum_{t=1}^{T} y_t(x_i; w_t),
+\]
+and the predicted probability of class \(1\) is obtained using the logistic sigmoid
+\[
+p_i \;=\; \sigma(y(x_i)) \;=\; \frac{1}{1+e^{-y(x_i)}}.
+\]
+A hard class prediction can then be
+\[
+\hat{t}_i \;=\; \mathbb{I}\!\left[p_i \ge \tfrac{1}{2}\right].
+\]
+
+The per-example loss is the Bernoulli negative log-likelihood (binary cross-entropy):
+\[
+\ell(t_i, y(x_i))
+= -\log\Big(\sigma(y(x_i))^{t_i}\bigl(1-\sigma(y(x_i))\bigr)^{1-t_i}\Big)
+= -t_i\log \sigma(y(x_i)) - (1-t_i)\log\bigl(1-\sigma(y(x_i))\bigr),
+\]
+where \(t_i\in\{0,1\}\).
+
+\section{Q10.6 For a $K$-class classification, describe how to perform prediction with a gradient boosted decision tree trained for $T$ time steps (how the individual trees perform prediction and how are the $KT$ trees combined to produce the predicted categorical distribution). [10]}
+For multiclass classification, we model the full categorical distribution using a generalized linear model with a softmax output.
+
+\paragraph{How individual trees predict.}
+For each boosting \emph{timestep} $t\in\{1,\dots,T\}$ we train \emph{$K$ trees}, one per class.
+The $k$-th tree at time $t$ produces a single real-valued output (a contribution to the linear score / logit of class $k$),
+denoted
+\[
+y_{t,k}(x_i; w_{t,k}).
+\]
+(As in a regression tree, the prediction is the constant value stored in the leaf reached by $x_i$.)
+
+\paragraph{How the $KT$ trees are combined.}
+We sum the contributions over timesteps separately for each class to obtain the $K$ logits:
+\[
+y_k(x_i) \;=\; \sum_{t=1}^{T} y_{t,k}(x_i; w_{t,k}), \qquad k=1,\dots,K.
+\]
+Equivalently, we form the logit vector
+\[
+y(x_i) \;=\; \Bigl(\sum_{t=1}^{T} y_{t,1}(x_i; w_{t,1}),\ \dots,\ \sum_{t=1}^{T} y_{t,K}(x_i; w_{t,K})\Bigr).
+\]
+
+\paragraph{Predicted categorical distribution.}
+Finally, we convert the logits to a categorical distribution with softmax:
+\[
+p(y=k\mid x_i) \;=\; \mathrm{softmax}(y(x_i))_k
+\;=\; \frac{\exp(y_k(x_i))}{\sum_{j=1}^{K}\exp(y_j(x_i))}.
+\]
+The predicted class is $\hat{y}_i=\arg\max_k p(y=k\mid x_i)$ (equivalently $\arg\max_k y_k(x_i)$).
+
+\section{Q10.7 What type of data are gradient boosted decision trees good for as opposed to multilayer perceptron? Explain the intuition why it is the case. [5]}
+
+
+Gradient boosted decision trees (GBDTs) are optimal for structured, tabular data where input features have high predictive power and clear interpretability. They can capture non-linear relationships and feature interactions without extensive preprocessing.
+
+\begin{itemize}
+    \item Good for lower-dimensional data with meaningful features.
+    \item Handles mixed data types (continuous, categorical).
+    \item Requires less data preprocessing.
+\end{itemize}
+
+Multilayer perceptrons (MLPs), or neural networks, are better suited for high-dimensional data such as images or text. They excel in learning hierarchical feature representations, essential in domains where raw features are not individually informative.
+
+\begin{itemize}
+    \item When one feature does not mean much alone.
+    \item Ideal for high-dimensional data (images, text).
+    \item Capable of complex feature extraction.
+    \item Benefits from pre-trained networks.
+\end{itemize}
+
+The choice of model depends on the dataset characteristics and the problem at hand.

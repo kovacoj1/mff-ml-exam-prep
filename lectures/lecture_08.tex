@@ -1,0 +1,240 @@
+\part{Lecture 8}
+
+\section{Q8.1 Prove that independent discrete random variables are uncorrelated. [10]}
+
+Given two discrete random variables \( X \) and \( Y \), they are said to be independent if the joint probability distribution can be expressed as the product of their marginal distributions:
+\[
+P(X = x, Y = y) = P(X = x)P(Y = y) \quad \text{for all } x \text{ and } y.
+\]
+
+The covariance of \( X \) and \( Y \) is defined as:
+\[
+\text{Cov}(X, Y) = \mathbb{E}[(X - \mathbb{E}[X])(Y - \mathbb{E}[Y])].
+\]
+
+For independent variables, the expectation of the product is the product of the expectations:
+\begin{align*}
+\text{Cov}(X, Y) &= \mathbb{E}[(X - \mathbb{E}[X])(Y - \mathbb{E}[Y])] \\
+&= \mathbb{E}[XY] - \mathbb{E}[X]\mathbb{E}[Y] - \mathbb{E}[X]\mathbb{E}[Y] + \mathbb{E}[X]\mathbb{E}[Y] \\
+&= \mathbb{E}[XY] - \mathbb{E}[X]\mathbb{E}[Y].
+\end{align*}
+
+Since \( X \) and \( Y \) are independent:
+\[
+\mathbb{E}[XY] = \mathbb{E}[X]\mathbb{E}[Y].
+\]
+
+Substituting this into the covariance formula gives:
+\[
+\text{Cov}(X, Y) = \mathbb{E}[X]\mathbb{E}[Y] - \mathbb{E}[X]\mathbb{E}[Y] = 0.
+\]
+
+Therefore, if \( X \) and \( Y \) are independent, their covariance is zero, implying that they are uncorrelated.
+
+\section{Q8.2 Give an example of two random variables that are dependent but uncorrelated. [5]}
+Let \(X \sim \mathrm{Unif}[-1,1]\) and define \(Y = |X|\).
+
+\paragraph{Dependent.}
+\(Y\) is completely determined by \(X\), so \(X\) and \(Y\) cannot be independent.
+
+\paragraph{Uncorrelated.}
+\[
+\mathrm{Cov}(X,Y)=\mathbb{E}[XY]-\mathbb{E}[X]\mathbb{E}[Y].
+\]
+By symmetry, \(\mathbb{E}[X]=0\). Also,
+\[
+\mathbb{E}[XY]=\mathbb{E}[X|X|]=\int_{-1}^{1} x|x| \cdot \frac{1}{2}\,dx = 0,
+\]
+because \(x|x|\) is an odd function on \([-1,1]\). Hence \(\mathrm{Cov}(X,Y)=0\), so they are uncorrelated, yet dependent.
+
+\section{Q8.3 Write down the definition of covariance and Pearson correlation coefficient $\rho$, including its range. [10]}
+
+The covariance between two random variables \( X \) and \( Y \) is a measure of the joint variability of \( X \) and \( Y \). It is defined as:
+\[
+\text{Cov}(X, Y) = \mathbb{E}[(X - \mathbb{E}[X])(Y - \mathbb{E}[Y])]
+\]
+where \( \mathbb{E} \) denotes the expected value.
+
+The Pearson correlation coefficient, denoted as \( \rho \) or \( r \), is defined as:
+\[
+\rho = \frac{\text{Cov}(X, Y)}{\sqrt{\text{Var}(X)\text{Var}(Y)}}
+\]
+\[
+r = \frac{\sum_{i} (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i} (x_i - \bar{x})^2 \sum_{i} (y_i - \bar{y})^2}}
+\]
+where:
+\begin{itemize}
+  \item \( \rho \) is used when the full expectation is computed (population Pearson correlation coefficient);
+  \item \( r \) is used when estimating the coefficient from data (sample Pearson correlation coefficient);
+  \item \( \bar{x} \) and \( \bar{y} \) are sample estimates of the respective means.
+\end{itemize}
+
+The range of the Pearson correlation coefficient is from -1 to 1, inclusive. A value of 1 implies a perfect positive linear relationship between variables, -1 implies a perfect negative linear relationship, and 0 implies no linear relationship.
+
+\section{Q8.4 Explain how are the Spearman's rank correlation coefficient and the Kendall rank correlation coefficient computed (no need to describe the Pearson correlation coefficient). [10]}
+Assume we have paired observations $\{(x_i,y_i)\}_{i=1}^n$.
+
+\subsection*{Spearman's rank correlation coefficient $\rho$}
+\begin{itemize}
+  \item Replace values by their \textbf{ranks}: $R_i=\mathrm{rank}(x_i)$ and $S_i=\mathrm{rank}(y_i)$
+  (ties are typically handled by assigning the average rank).
+  \item Compute Pearson correlation \textbf{on the ranks}:
+  \[
+  \rho_{\text{Spearman}}
+  = \frac{\sum_{i=1}^n (R_i-\bar R)(S_i-\bar S)}
+  {\sqrt{\sum_{i=1}^n (R_i-\bar R)^2}\sqrt{\sum_{i=1}^n (S_i-\bar S)^2}}.
+  \]
+  \item If there are \textbf{no ties}, an equivalent shortcut is
+  \[
+  \rho_{\text{Spearman}} = 1 - \frac{6\sum_{i=1}^n d_i^2}{n(n^2-1)},
+  \qquad d_i = R_i - S_i.
+  \]
+\end{itemize}
+
+\subsection*{Kendall rank correlation coefficient $\tau$}
+\begin{itemize}
+  \item Consider all unordered pairs $(i,j)$ with $i<j$.
+  \item A pair is \textbf{concordant} if $(x_i-x_j)(y_i-y_j) > 0$ (they move in the same direction),
+  and \textbf{discordant} if $(x_i-x_j)(y_i-y_j) < 0$ (they move in opposite directions).
+  \item Let $C$ be the number of concordant pairs and $D$ the number of discordant pairs. Then
+  \[
+  \tau
+  = \frac{C-D}{\binom{n}{2}}
+  = \frac{1}{\binom{n}{2}}\sum_{i<j}\mathrm{sign}(x_j-x_i)\,\mathrm{sign}(y_j-y_i).
+  \]
+  \item With ties, $\tau$ as defined above has a smaller attainable range; tie-corrected variants exist.
+\end{itemize}
+
+Both coefficients range from -1 to 1. A coefficient of 1 implies a perfect agreement, -1 implies perfect disagreement, and 0 implies the absence of association.
+
+\section{Q8.5 Describe setups or tasks where a correlation coefficient might be a good evaluation metric. [5]}
+A correlation coefficient is a good evaluation metric when we care about whether the model outputs
+\emph{track} the target values (or preserve their ordering), rather than matching the exact scale.
+
+\begin{itemize}
+  \item \textbf{Learning to rank (e.g., document retrieval):} we care about the \emph{ordering} of items, not the
+  absolute scores. Rank correlations such as Spearman's $\rho$ or Kendall's $\tau$ are appropriate.
+
+  \item \textbf{Similarity evaluation (embeddings):} evaluate word/sentence embeddings by correlating embedding
+  similarities (e.g.\ cosine similarity) with human similarity ratings for word/sentence pairs (often Pearson or Spearman).
+
+  \item \textbf{Inter-annotator agreement for continuous labels:} when annotators provide real-valued scores
+  (e.g.\ rating sentiment strength), correlation between annotators indicates consistency/reliability.
+
+  \item \textbf{Validating automatic metrics against human judgment:} for subjective tasks (e.g.\ machine translation
+  quality, grammar checking), we often judge an automatic metric by how strongly it correlates with human ratings.
+\end{itemize}
+
+\section{Q8.6 Describe under what circumstance correlation can be used to assess validity of evaluation metrics. Name examples of tasks. What data do you need besides the model predictions and the targets? [10]}
+\paragraph{When correlation is used (metric validity / meta-evaluation).}
+Correlation is used to assess the \emph{validity} of an evaluation metric when:
+\begin{itemize}
+  \item the task quality is at least partly \textbf{subjective} or \textbf{multi-correct} (there are many acceptable outputs),
+  so comparing only to a single reference/target is imperfect; and
+  \item we want to know whether an \textbf{automatic metric} (computed from predictions and references) agrees with
+  \textbf{human judgments} of quality.
+\end{itemize}
+In this setting, a metric is considered more valid if its scores are strongly correlated with human scores
+(or if it induces a similar ranking of systems).
+
+\paragraph{Examples of tasks.}
+\begin{itemize}
+  \item \textbf{Machine translation} (validating BLEU/chrF/COMET etc.\ against human adequacy/fluency ratings).
+  \item \textbf{Text summarization} (validating ROUGE/BERTScore etc.\ against human quality, coherence, faithfulness).
+  \item \textbf{Image captioning / text generation} (validating CIDEr/SPICE and similar against human ratings).
+  \item \textbf{Dialogue / open-ended generation} (validating automatic metrics against human preference or quality scores).
+\end{itemize}
+
+\paragraph{What extra data you need (besides predictions and targets).}
+To compute such a correlation you need \textbf{human evaluation data} aligned with the same items/systems, e.g.:
+\begin{itemize}
+  \item \textbf{Human quality scores} per output (continuous ratings) \emph{or} \textbf{human rankings / pairwise preferences}.
+  \item Often \textbf{outputs from multiple systems/models} (or multiple checkpoints) to create enough variability for a meaningful correlation,
+  measured either at:
+  \begin{itemize}
+    \item \textbf{system-level} (one score per system) or
+    \item \textbf{segment-level} (one score per example/sentence).
+  \end{itemize}
+\end{itemize}
+Then compute the correlation between automatic metric scores and human judgments (Pearson for linear agreement, Spearman/Kendall for rank agreement).
+
+\section{Q8.7 Define Mean Reciprocal Rank (MRR) and explain for what tasks it is used. Describe a scenario where you would prefer MRR over Spearman/Kendall correlation. [10]}
+\paragraph{Definition.}
+Given a set of queries $\{q_i\}_{i=1}^N$ and, for each query $q_i$, a ranked list of items returned by a system,
+let $\mathrm{rank}_i$ be the position (1 = best) of the \emph{first relevant} item for query $i$.
+The \emph{reciprocal rank} for query $i$ is
+\[
+\mathrm{RR}_i = \frac{1}{\mathrm{rank}_i},
+\]
+and the \emph{Mean Reciprocal Rank} is
+\[
+\mathrm{MRR} = \frac{1}{N}\sum_{i=1}^{N} \frac{1}{\mathrm{rank}_i}.
+\]
+(If a query has no relevant item retrieved, one typically uses $\mathrm{RR}_i=0$.)
+
+\paragraph{What tasks it is used for.}
+MRR is used in \textbf{ranking / retrieval} tasks where each query is expected to have
+one (or a small number of) correct/relevant answers and we care about \textbf{how early} the first relevant item appears, e.g.:
+\begin{itemize}
+  \item information retrieval / search (first relevant document),
+  \item question answering (first correct answer passage),
+  \item recommendation / candidate ranking (first relevant item),
+  \item entity linking / synonym or definition retrieval.
+\end{itemize}
+
+\paragraph{When prefer MRR over Spearman/Kendall.}
+Prefer MRR when the evaluation is \textbf{query-wise} and relevance is \textbf{binary} (relevant / not relevant),
+and the goal is to optimize \textbf{top-of-the-list success}.
+Example scenario: a QA system returns a ranked list of candidate answers and the user will look only at the top few.
+MRR directly rewards placing the \emph{first correct} answer at rank 1 (score 1), rank 2 (score $1/2$), etc.
+
+In contrast, Spearman/Kendall measure \textbf{agreement between two rankings} (e.g.\ metric vs.\ human ranking, or predicted vs.\ true ordering),
+which is not the primary objective when we simply want the first relevant item as high as possible.
+
+\section{Q8.8 Define Cohen's \(\kappa\) and explain what it is used for when preparing data for machine learning. [10]}
+
+Cohen's kappa coefficient (\(\kappa\)) is a statistical measure used to evaluate the inter-annotator agreement for qualitative (categorical) items. It is defined as:
+
+\[
+\kappa = \frac{p_o - p_e}{1 - p_e}
+\]
+
+where \( p_o \) is the relative observed agreement among raters, and \( p_e \) is the hypothetical probability of chance agreement. 
+
+This metric is utilized in machine learning to assess the consistency of annotations provided by different human experts. It serves multiple purposes:
+
+\begin{itemize}
+  \item \textbf{Data Reliability:} Ensures that the data labels used for training machine learning models are consistent and reliable.
+  \item \textbf{Annotator Performance:} Helps in evaluating the performance of annotators and can be used to filter out unreliable annotations.
+  \item \textbf{Cultural Insights:} Low values of \(\kappa\) might indicate cultural differences or subjectivity in the data, providing insights into potential biases.
+  \item \textbf{Model Benchmarking:} Sets a benchmark for machine learning performance, as achieving high accuracy beyond IAA is often unrealistic and might indicate overfitting or data leakage.
+\end{itemize}
+
+By quantifying the agreement level, Cohen's kappa allows for more informed decisions in the data curation process, ultimately leading to the development of more robust machine learning models.
+
+\section{Q8.9 Explain the relationship between inter-annotator agreement and expected model performance. Why is it suspicious if a model achieves performance significantly above the inter-annotator agreement? What does this suggest about the model and the data? [10]}
+\paragraph{Relationship (IAA as a performance ceiling).}
+\emph{Inter-annotator agreement (IAA)} measures how consistently humans assign labels/ratings to the same items, i.e.,
+how well-defined the task is and how reliable the labels are.
+If annotators often disagree, the targets contain irreducible ambiguity/noise, so a supervised model trained on these targets
+cannot (in general) achieve arbitrarily high test performance: \textbf{IAA sets a natural upper bound (ceiling) on attainable ML performance}. 
+
+\paragraph{Why performance well above IAA is suspicious.}
+If a model scores \emph{significantly} above IAA, it is unlikely to be genuine ``super-human'' ability; rather, it often indicates
+the model is exploiting something other than the intended signal. The slides explicitly note that
+\textbf{performance over IAA is suspicious and is more likely overfitting to the way the data is curated than super-human performance}.
+
+\paragraph{What it suggests about the model and the data.}
+Performance $\gg$ IAA typically suggests issues such as:
+\begin{itemize}
+  \item \textbf{Dataset artifacts / shortcuts:} the model learns spurious cues correlated with the label (annotation patterns, formatting, metadata, template effects),
+  not the underlying phenomenon the task intends to measure.
+  \item \textbf{Data leakage or contamination:} overlap/near-duplicates between train and test, or other leakage that makes the test set easier than it should be.
+  \item \textbf{Evaluation mismatch / target bias:} the model may be evaluated against a \emph{single} annotator's labels and can ``learn that annotator'';
+  since IAA measures agreement between humans, matching one annotator can exceed human-human agreement without truly solving the task.
+  \item \textbf{IAA not representative:} IAA might have been computed on a harder subset, different annotator pool, or with a different protocol/metric.
+\end{itemize}
+
+\paragraph{Practical implication.}
+Use IAA to identify confusing items/unreliable annotators and to understand the realistic headroom for models; if model performance exceeds IAA,
+investigate curation/leakage/artifacts before claiming a breakthrough.

@@ -1,0 +1,185 @@
+\part{Lecture 2}
+\section{Q2.1 Describe standard gradient descent and compare it to stochastic (i.e., online) gradient descent and minibatch stochastic gradient descent. Explain what it is used for in machine learning. [10]}
+We use it to search for the best model weights in an iterative/incremental/sequential fashion. Either because there is too much data, or the direct optimization is not feasible.
+
+\textbf{Standard gradient descent}, also known as batch gradient descent, computes the gradient of the cost function with respect to the parameters (\( w \)) for the entire training dataset:
+\[
+w \leftarrow w - \alpha \nabla_w E(w)
+\]
+where \( \alpha \) is the learning rate.
+
+\textbf{Stochastic Gradient Descent (SGD)}, or online gradient descent, on the other hand, updates the parameters for each training example:
+\[
+\nabla_w E(w) \approx \nabla_w L(y(x_i; w), t_i)
+\]
+This method is noisier but can converge faster for large datasets.
+
+\textbf{Minibatch SGD} is a compromise between the two, updating the parameters for a small subset of the training data:
+\[
+\nabla_w E(w) \approx \frac{1}{B} \sum_{i=1}^{B} \nabla_w L(y(x_i; w), t_i)
+\]
+This approach aims to balance the computational efficiency of standard gradient descent with the faster convergence of SGD.
+
+\section{Q2.2 Explain the relationship between model capacity and overfitting/underfitting. How does increasing polynomial degree in linear regression affect model capacity, and what are the consequences? [10]}
+
+\subsection*{Model capacity vs.\ underfitting/overfitting}
+\textbf{Model capacity} describes how rich a set of functions a model can represent (representational capacity) and, in practice, how rich it effectively behaves under training/regularization (effective capacity). If capacity is \emph{too small}, the model cannot capture the underlying pattern in the data, leading to \textbf{underfitting}: both training and test errors are high. If capacity is \emph{too large} relative to the amount/noise of data, the model can fit idiosyncrasies of the training set, leading to \textbf{overfitting}: training error becomes very low, but test/validation error increases (a growing generalization gap). Typically, as capacity increases, training error decreases monotonically, while test error follows a U-shape with an optimal intermediate capacity.
+
+\subsection*{Polynomial degree as capacity control in linear regression}
+Although linear regression is linear in parameters, using \textbf{polynomial features} increases its capacity.
+For scalar input $x\in\mathbb{R}$, define the feature vector
+\[
+\boldsymbol{x} = (x^0, x^1, \dots, x^M),
+\]
+then the prediction becomes
+\[
+y(x) = \sum_{j=0}^{M} w_j x^j,
+\]
+i.e., a polynomial of degree $M$. Increasing the polynomial degree $M$ therefore increases the model's
+\textbf{representational capacity} (the hypothesis space becomes larger and can represent more complex functions).
+
+\subsection*{Consequences of increasing $M$}
+\begin{itemize}
+    \item \textbf{From underfitting to good fit:} small $M$ may be too rigid (e.g.\ almost linear), so the model underfits and cannot match the curvature of the data.
+    \item \textbf{Risk of overfitting:} large $M$ can fit the training points extremely closely (very low training error), but may produce highly oscillatory functions and become sensitive to noise/outliers, worsening validation/test error.
+    \item \textbf{Need for control:} $M$ is a \emph{hyperparameter} typically chosen using a validation set. Regularization (e.g.\ $L_2$ weight decay) can reduce \emph{effective capacity} by discouraging large weights, often mitigating the overfitting observed at high degrees.
+\end{itemize}
+
+\section{Q2.3 Explain possible intuitions behind $L^2$ regularization. [5]}
+
+$L^2$ regularization helps prevent overfitting by adding a penalty for large weights in a model. This penalty is the sum of the squares of the model's parameters, making it costly to have very large values. By keeping the weights smaller, the model becomes simpler and less likely to fit noise in the data. It also balances bias and variance, reducing the model's sensitivity to specific features and improving its ability to generalize to new data.
+
+Generally, we want to reduce overfitting of the model. In short, the regularization controls complexity to create smoother, more reliable models.
+
+\section{Q2.4 Explain the difference between hyperparameters and parameters. [5]}
+
+Parameters are internal values that the model learns from the training data. Examples include weights in linear regression or neural networks and the split points in decision trees. Parameters change automatically during training to optimize the model's performance by minimizing the loss function.
+
+Hyperparameters are external configurations set before training begins and control how the learning process operates. Examples include the learning rate, regularization strength, and the number of hidden layers in a neural network. Unlike parameters, hyperparameters are not learned from the data but must be tuned manually or using automated search techniques to find the best model performance.
+
+In summary, parameters are learned by the model, while hyperparameters are predefined settings that influence how the model learns.
+
+\section{Q2.5 Write an \( L^2 \)-regularized minibatch SGD algorithm for training a linear regression model, including the explicit formulas (i.e, formulas you would need to code it with \texttt{numpy}) of the loss function and its gradient. [10]}
+The loss function for \( L^2 \)-regularized linear regression is given by:
+\[
+E(w) = \frac{1}{2} \mathbb{E}_{(x,t)\sim p_{\text{data}}} [(x^T w - t)^2] + \frac{\lambda}{2} \|w\|^2
+\]
+where \( w \) are the weights, \( x \) is the input, \( t \) is the target, and \( \lambda \) is the regularization parameter.
+
+The gradient of the loss function with respect to the weights is:
+\[
+\nabla_w E(w) \approx \frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} ((x_i^T w - t_i)x_i) + \lambda w
+\]
+where \( \mathcal{B} \) is a minibatch of examples.
+
+\begin{algorithm}
+\subsection*{Pseudocode of the minibatch SGD algorithm}
+\begin{algorithmic}[1]
+\Require Dataset \( \{X \in \mathbb{R}^{N \times D}, t \in \mathbb{R}^N\} \), learning rate \( \alpha \in \mathbb{R}_+ \), \( L_2 \) strength \( \lambda \in \mathbb{R} \)
+\Ensure Weights \( w \in \mathbb{R}^D \) minimizing the regularized MSE of a linear regression model.
+\State Initialize \( w \) randomly
+\Repeat
+    \State Sample a minibatch \( \mathcal{B} \) of examples with indices \( \mathcal{B} \)
+    \State Compute gradient \( g \) according to \( \nabla_w E(w) \) using \( \mathcal{B} \)
+    \State Update \( w \): \( w \leftarrow w - \alpha \cdot g \)
+\Until{convergence or maximum number of iterations is reached}
+\end{algorithmic}
+\end{algorithm}
+
+
+\section{Q2.6 Does the SGD algorithm for linear regression always find the best solution on the training data? If yes, explain under what conditions it happens, if not explain why it is not guaranteed to converge. What properties of the error function does this depend on? [10]}
+
+Stochastic Gradient Descent (SGD) for linear regression does not always guarantee finding the best solution on the training data. It converges to the global optimum if the following conditions are met:
+
+\begin{itemize}
+    \item The loss function is convex and continuous.
+    \item The sequence of learning rates \( \alpha_i \) meets the Robbins-Monro conditions, which are:
+    \begin{itemize}
+        \item \( \alpha_i > 0 \)
+        \item \( \sum_{i=1}^{\infty} \alpha_i = \infty \)
+        \item \( \sum_{i=1}^{\infty} \alpha_i^2 < \infty \)
+    \end{itemize}
+    \item The third condition ensures that \( \alpha_i \rightarrow 0 \) as \( i \rightarrow \infty \).
+\end{itemize}
+
+When these conditions are satisfied, SGD converges to the unique optimum of convex problems. However, for non-convex loss functions, SGD is not guaranteed to find the global minimum; it may converge to a local minimum instead. The noise in the gradient estimation due to the stochastic nature of the algorithm can also affect convergence. Thus, while SGD can perform well in practice, especially for large datasets, it doesn't always find the best solution due to these factors.
+
+\section{Q2.7 After training a model with SGD, you ended up with a low training error and a high test error. Using the learning curves, explain what might have happened and what steps you might take to prevent this from happening. [10]}
+
+The learning curves might indicate that while the training loss decreases over time, the test loss decreases initially but then starts to increase. This scenario suggests that the \textbf{model is overfitting} to the training data. Overfitting occurs when a model learns the training data too well, including noise and details that do not generalize to unseen data. Consequently, the model performs well on the training data but poorly on the test data.
+
+To prevent overfitting, you can take the following steps:
+\begin{enumerate}
+    \item Use regularization techniques such as \( L_1 \) (LASSO) or \( L_2 \) (Ridge) to penalize large weights in the model.
+    \item Implement early stopping based on validation performance to halt training before overfitting occurs.
+    \item Increase the size of the training set if possible, to provide the model with more generalizable examples.
+    \item Simplify the model by reducing its complexity to prevent it from capturing noise in the data. (Make less features, use less layers, etc.)
+\end{enumerate}
+
+These methods can help in guiding the model to generalize better to unseen data and thus improve its test performance.
+
+Another reason might be that the model \textbf{failed to converge}. In this case, you can try to increase the number of iterations or decrease the learning rate to improve convergence.
+
+\section{Q2.8 You were given a fixed training set and a fixed test set, and you are supposed to report model performance on that test set. You need to decide what hyperparameters to use. How will you proceed and why? [10]}
+
+To determine the best hyperparameters for a model given a fixed training and test set, the following procedure should be employed:
+
+\begin{enumerate}
+    \item \textbf{Split the training set:} Divide the training set into a smaller training set and a validation set.
+    \item \textbf{Hyperparameter tuning:} Use the smaller training set to train different models with various hyperparameter configurations. (Grid Search, Random Search, Hyperband, SMAC, etc.)
+    \item \textbf{Validation:} Evaluate the performance of each model on the validation set.
+    \item \textbf{Selection:} Choose the hyperparameters that yield the best performance on the validation set.
+    \item \textbf{Final Model:} Train a new model on the full training set using the selected hyperparameters.
+    \item \textbf{Testing:} Report the model's performance on the fixed test set.
+\end{enumerate}
+
+This procedure is crucial because it helps to estimate the model's performance on unseen data and prevents overfitting to the training set. The validation set acts as a proxy for the test set, allowing for an unbiased evaluation of hyperparameter choices.
+
+\section{Q2.9 What method can be used for normalizing feature values? Explain why it is useful. [5]}
+
+Feature normalization can be achieved through methods such as Min-Max normalization and Z-score standardization. These methods are useful for several reasons:
+
+\begin{itemize}
+    \item \textbf{Min-Max Normalization:} Scales the features to a fixed range, typically [0, 1]. It is given by the formula:
+    \[
+    x'_{i,j} = \frac{x_{i,j} - \min_k x_{k,j}}{\max_k x_{k,j} - \min_k x_{k,j}}
+    \]
+    This method is beneficial when we need to bound our features within a specific scale without distorting differences in the ranges of values.
+    
+    \item \textbf{Z-score Standardization:} Transforms the features to have a mean of zero and a standard deviation of one. The formula is:
+    \[
+    x'_{i,j} = \frac{x_{i,j} - \bar{x}_j}{\sigma_j}
+    \]
+    This is particularly useful in optimization algorithms that require features on a comparable scale for efficient learning.
+\end{itemize}
+
+Additionally, techniques similar to PCA, such as Principal Component Analysis itself, can be used for feature scaling and reduction. PCA transforms the data into a new coordinate system, reducing dimensionality and potentially improving model performance by removing noise and redundancy in the data.
+
+\section{Q2.10 You have a dataset with a categorical feature "color" with values {"red", "green", "blue"}. Explain why using integer encoding (`red=0`, `green=1`, `blue=2`) is problematic for linear regression. How would encode such feature instead? [10]}
+Using integer encoding (red$=0$, green$=1$, blue$=2$) is problematic in linear regression because it imposes an
+\emph{artificial ordering and distance} between categories. The model treats ``color'' as a numeric variable, so its
+contribution is
+\[
+w_{\text{color}}\cdot \text{color},
+\]
+which implies (i) a ranking red $<$ green $<$ blue, and (ii) that the step from red$\to$green is the same as from
+green$\to$blue. This is not meaningful for nominal categories and forces the effect to be linear in these arbitrary
+integers (e.g.\ blue would be assumed to have twice the effect of green relative to red).
+
+A suitable encoding is \textbf{one-hot (dummy) encoding}. Represent the three categories by binary indicator variables:
+\[
+\text{red}=(1,0,0),\quad \text{green}=(0,1,0),\quad \text{blue}=(0,0,1).
+\]
+Then the linear model can learn an independent weight for each category. 
+{\color{gray}
+In practice, to avoid redundancy with the bias
+term (perfect multicollinearity), one typically uses $K-1$ dummy variables (reference coding), e.g.
+\[
+x_1=\mathbb{I}[\text{green}],\qquad x_2=\mathbb{I}[\text{blue}],
+\]
+and treat ``red'' as the reference category. The prediction becomes
+\[
+\hat{y}=b+w_1\,\mathbb{I}[\text{green}]+w_2\,\mathbb{I}[\text{blue}],
+\]
+so $w_1$ and $w_2$ represent the effects of green/blue relative to red.
+}

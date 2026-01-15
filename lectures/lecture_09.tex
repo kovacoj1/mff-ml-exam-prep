@@ -1,0 +1,401 @@
+\part{Lecture 9}
+
+\section{Q9.1 Considering an averaging ensemble of $M$ models, prove the relation between the average mean squared error of the ensemble and the average error of the individual models, assuming the model errors have zero means and are uncorrelated. Use a formula to explain what uncorrelated errors mean in this context. [20]}
+
+Let \( y_i(x) \) be the prediction of model \( i \) for an input \( x \) with true target \( t \), and \( \varepsilon_i(x) \) be the error of model \( i \) such that \( y_i(x) = t + \varepsilon_i(x) \). The mean squared error (MSE) of model \( i \) is:
+
+\[
+\mathbb{E}\left[\left(y_i(x) - t\right)^2\right] = \mathbb{E}\left[\varepsilon_i^2(x)\right].
+\]
+
+For an ensemble of \( M \) models, the ensemble prediction is the average of individual predictions:
+
+\[
+y_{\text{ensemble}}(x) = \frac{1}{M} \sum_{i=1}^{M} y_i(x).
+\]
+
+The MSE of the ensemble is then:
+
+\[
+\mathbb{E}\left[\left(y_{\text{ensemble}}(x) - t\right)^2\right] = \mathbb{E}\left[\left(\frac{1}{M} \sum_{i=1}^{M} \varepsilon_i(x)\right)^2\right].
+\]
+
+Assuming that errors \( \varepsilon_i(x) \) are uncorrelated and have zero means, we have:
+
+\[
+\mathbb{E}\left[\varepsilon_i(x)\varepsilon_j(x)\right] = 0 \quad \text{for} \quad i \neq j.
+\]
+
+Therefore, the MSE of the ensemble simplifies to:
+
+\[
+\mathbb{E}\left[\left(\frac{1}{M} \sum_{i=1}^{M} \varepsilon_i(x)\right)^2\right] = \frac{1}{M^2} \mathbb{E}\left[\left(\sum_{i=1}^{M} \varepsilon_i(x)\right)^2\right] + \frac{1}{M^2} \sum_{i, j} \mathbb{E}\left[\varepsilon_i(x)\varepsilon_j(x)\right] \\
+= \frac{1}{M}\mathbb{E}\left[\frac{1}{M}\sum_{i}\varepsilon_{i}^{2}(x)\right],
+\]
+
+Hence, the average MSE of the ensemble is \( \frac{1}{M} \) times the average MSE of the individual models.
+
+\section{Q9.2 Explain knowledge distillation: what it is used for, describe how it is done. What is the loss function? How does it differ from standard training? [10]}
+\paragraph{What it is and what it is used for.}
+\emph{Knowledge distillation} trains a smaller/faster \textbf{student} model to mimic a stronger \textbf{teacher}
+model (often a large model or an ensemble). It is used when the teacher is too slow/large for deployment,
+but we want to keep most of its performance.
+
+\paragraph{How it is done (procedure).}
+\begin{enumerate}
+  \item Train (or choose) a high-quality teacher model.
+  \item Run the teacher on the training data (and optionally extra unlabeled data) to obtain
+  the \textbf{full output distribution} for each input:
+  \[
+  p_{\text{teacher}}(y\mid x).
+  \]
+  \item Train the student on the same inputs so that its output distribution matches the teacher's:
+  \[
+  p_{\text{student}}(y\mid x) \approx p_{\text{teacher}}(y\mid x).
+  \]
+\end{enumerate}
+
+\paragraph{Loss function.}
+A standard distillation objective is the cross-entropy between the teacher and student distributions:
+\[
+\mathcal{L}_{\text{distill}}
+= \sum_{(x,\cdot)\in \mathcal{D}} H\!\left(p_{\text{teacher}}(\cdot\mid x),\,p_{\text{student}}(\cdot\mid x)\right)
+= -\sum_{(x,\cdot)\in \mathcal{D}}\sum_{y} p_{\text{teacher}}(y\mid x)\,\log p_{\text{student}}(y\mid x).
+\]
+(Equivalently, this is minimizing a KL divergence up to an additive constant.)
+
+\paragraph{How it differs from standard training.}
+In standard supervised training, the target is typically a \textbf{one-hot} label distribution
+\(\delta_{y=y^*}\), so the loss is
+\[
+\mathcal{L}_{\text{standard}} = -\sum_{(x,y^*)\in\mathcal{D}} \log p_{\text{student}}(y^*\mid x).
+\]
+In distillation, the target is the teacher's \textbf{soft} distribution \(p_{\text{teacher}}(\cdot\mid x)\),
+which provides richer supervision (e.g., it tells the student not only the top class, but also which
+other classes are plausible), making it easier for the smaller model to learn the teacher's behavior.
+
+\section{Q9.3 Describe the difference between voting (hard voting) and averaging (soft voting) in classification ensembles. Assuming, you have classication into three classes, give an example of classifier outputs where hard voting and soft voting differ. [10]}
+\paragraph{Hard voting (majority vote).}
+Each base classifier outputs a \emph{single class label} (its $\arg\max$ class). The ensemble prediction is the class
+with the most votes:
+\[
+\hat{y} = \arg\max_{c\in\{1,2,3\}} \sum_{m=1}^{M}\mathbb{I}\!\left[\hat{y}^{(m)}=c\right].
+\]
+
+\paragraph{Soft voting (probability averaging).}
+Each base classifier outputs a \emph{probability vector} over classes. The ensemble averages these probabilities
+(and then takes $\arg\max$):
+\[
+\hat{y} = \arg\max_{c\in\{1,2,3\}} \frac{1}{M}\sum_{m=1}^{M} p^{(m)}(y=c\mid x).
+\]
+Soft voting uses the \emph{confidence} information; hard voting discards it.
+
+\paragraph{Example where they differ (3 classes).}
+Suppose we have $M=3$ classifiers with probability outputs:
+\[
+p^{(1)}=(0.34,\,0.33,\,0.33)\ \Rightarrow\ \hat{y}^{(1)}=1,
+\]
+\[
+p^{(2)}=(0.34,\,0.33,\,0.33)\ \Rightarrow\ \hat{y}^{(2)}=1,
+\]
+\[
+p^{(3)}=(0.01,\,0.99,\,0.00)\ \Rightarrow\ \hat{y}^{(3)}=2.
+\]
+
+\textbf{Hard voting:} votes are $(2 \text{ for class }1,\ 1 \text{ for class }2)$, so the ensemble predicts class $1$.
+
+\textbf{Soft voting:} average the probabilities:
+\[
+\bar{p}=\frac{1}{3}\Big((0.34,0.33,0.33)+(0.34,0.33,0.33)+(0.01,0.99,0.00)\Big)
+=(0.23,\,0.55,\,0.22),
+\]
+so the ensemble predicts class $2$.
+
+Hence, hard voting chooses class $1$ (majority labels) while soft voting chooses class $2$ (high-confidence classifier dominates).
+
+\section{Q9.4 List and explain three common heuristics used to control the growth of decision trees. Explain what problem it helps prevent and why. [10]}
+Decision trees can keep splitting until leaves are (nearly) pure, which often leads to \textbf{overfitting} (high variance):
+the tree starts fitting noise and dataset-specific quirks. The following heuristics \emph{pre-prune} the tree by limiting its complexity:
+
+\begin{itemize}
+  \item \textbf{Maximum tree depth:} do not split nodes deeper than a chosen depth \(d_{\max}\).
+  This limits how many sequential rules the tree can form and prevents very specific, fragile decision paths.
+
+  \item \textbf{Minimum examples to split:} only split a node if it contains at least \(n_{\min}\) training examples.
+  This prevents creating splits (and leaves) supported by very few samples, which are statistically unreliable and typically reflect noise.
+
+  \item \textbf{Maximum number of leaf nodes:} keep splitting only until the tree has at most \(L_{\max}\) leaves.
+  This directly caps the number of regions the input space is partitioned into, controlling model capacity similarly to limiting depth.
+\end{itemize}
+
+\paragraph{What problem this prevents and why.}
+These heuristics prevent \textbf{overfitting} by restricting the tree's size/complexity.
+A fully grown tree can achieve very low training error by memorizing the training set, but such detailed rules generalize poorly.
+By stopping growth early, we reduce variance (increase stability) at the cost of a small increase in bias, which typically improves test performance.
+
+\section{Q9.5 In a regression decision tree, state what values are kept in internal nodes, define the squared error criterion and describe how is a leaf split during training (without discussing splitting constraints). [10]}
+Assume training data \(X \in \mathbb{R}^{N\times D}\) and targets \(t \in \mathbb{R}^N\).
+For any node \(T\), denote by \(I_T\) the set of training-example indices that fall into \(T\).
+
+\paragraph{What is stored in internal nodes.}
+An internal node stores a \emph{split rule}: a selected feature (dimension) \(d \in \{1,\dots,D\}\) and a split value \(s\),
+which route an example \(i\in I_T\) to
+\[
+T_L:\ x_{i,d} \le s
+\qquad\text{or}\qquad
+T_R:\ x_{i,d} > s,
+\]
+(i.e., the node stores \((d,s)\) and pointers to children \(T_L, T_R\)).
+
+\paragraph{Prediction in a leaf.}
+A leaf \(T\) predicts the average target value of the examples inside it:
+\[
+t_T = \frac{1}{|I_T|}\sum_{i\in I_T} t_i.
+\]
+
+\paragraph{Squared error criterion.}
+The (non-averaged) squared error criterion for a node \(T\) is
+\[
+c_{\mathrm{SE}}(T) \;=\; \sum_{i\in I_T} \bigl(t_i - t_T\bigr)^2,
+\]
+which is proportional to the variance in the node times \(|I_T|\).
+
+\paragraph{How a leaf is split during training.}
+To split a leaf \(T\), try candidate splits by iterating over
+\begin{itemize}
+  \item a feature \(d\) (loop over \(d=1,\dots,D\)),
+  \item a split value \(s\) (loop over candidate values, typically unique values of the feature in the node),
+\end{itemize}
+which induces child index sets
+\[
+I_{T_L}(d,s)=\{i\in I_T : x_{i,d}\le s\},\qquad
+I_{T_R}(d,s)=\{i\in I_T : x_{i,d}> s\}.
+\]
+For each candidate, compute the post-split criterion
+\[
+c_{\mathrm{SE}}(T_L)+c_{\mathrm{SE}}(T_R)
+\]
+(or equivalently the criterion difference)
+\[
+\Delta(d,s) = \bigl(c_{\mathrm{SE}}(T_L)+c_{\mathrm{SE}}(T_R)\bigr) - c_{\mathrm{SE}}(T),
+\]
+and choose \((d,s)\) that minimizes \(\Delta(d,s)\) (i.e., decreases the criterion the most).
+Then replace the leaf \(T\) by an internal node with this split and create the two new leaves \(T_L, T_R\),
+each predicting its own mean \(t^{T_L}, t^{T_R}\).
+
+\section{Q9.6 Explain the CART algorithm for constructing a decision tree. Explain the relationship between the loss function that is optimized during the decision tree construction and the splitting criterion that is during the node splitting. [10]}
+\paragraph{CART (Classification and Regression Trees): tree construction.}
+We are given training data \(X\in\mathbb{R}^{N\times D}\) and targets \(t\) (real-valued for regression, categorical for classification).
+A decision tree partitions the training set into leaf regions. For a node \(T\), let \(I_T\) denote the set of training indices that fall into \(T\).
+
+\begin{enumerate}
+  \item \textbf{Initialize:} start with a single leaf \(T_{\text{root}}\) containing all examples \(I_{T_{\text{root}}}=\{1,\dots,N\}\).
+  \item \textbf{Leaf prediction:} each leaf \(T\) predicts the best constant parameter for that leaf
+  (regression: a scalar \(t^T\); classification: a distribution \(p_T\)).
+  \item \textbf{Greedy splitting loop:} repeatedly choose a leaf \(T\) and split it into two children \(T_L,T_R\) using a binary rule
+  "feature \(d\) and split value \(s\)":
+  \[
+    I_{T_L}(d,s)=\{i\in I_T : x_{i,d}\le s\},\qquad
+    I_{T_R}(d,s)=\{i\in I_T : x_{i,d}> s\}.
+  \]
+  Evaluate candidate splits \((d,s)\) and pick the one that improves the criterion the most (see below), then replace \(T\) by an internal node storing \((d,s)\) and create leaves \(T_L,T_R\).
+\end{enumerate}
+
+\paragraph{Loss function \(\Rightarrow\) node criterion and splitting criterion.}
+Fix a tree structure (i.e., a fixed partition into leaves). Training can be viewed as minimizing a loss over leaf parameters:
+\[
+\min_{\{\theta^T\}} \ \sum_{\text{leaves }T}\ \sum_{i\in I_T} \ell(\theta^T, t_i),
+\]
+where \(\theta^T\) is the leaf parameter (regression: \(\theta^T=t^T\); classification: \(\theta^T=p_T\)).
+
+For each leaf \(T\), define the \emph{minimum reachable loss} in that leaf:
+\[
+c_T \ \stackrel{\mathrm{def}}{=}\ \min_{\theta}\ \sum_{i\in I_T} \ell(\theta,t_i).
+\]
+Then the minimum reachable loss of the whole tree equals \(\sum_{\text{leaves }T} c_T\).
+
+\medskip
+\textbf{Key relationship:} when we split a leaf \(T\) into \(T_L,T_R\), the best achievable total loss changes from \(c_T\) to \(c_{T_L}+c_{T_R}\).
+Therefore the \emph{splitting criterion} is exactly the increase/decrease in the minimum reachable loss:
+\[
+\Delta(d,s) \;=\; c_{T_L}+c_{T_R}-c_T.
+\]
+CART chooses the split \((d,s)\) that \emph{minimizes} \(\Delta(d,s)\), i.e., yields the largest decrease in the minimum reachable loss.
+
+\paragraph{Concrete criteria (examples).}
+\begin{itemize}
+  \item \textbf{Regression:} with squared loss, the optimal leaf prediction is
+  \(t^T=\frac{1}{|I_T|}\sum_{i\in I_T} t_i\) and
+  \[
+    c_T \equiv c_{\mathrm{SE}}(T)=\sum_{i\in I_T}(t_i-t^T)^2.
+  \]
+  \item \textbf{Classification:} with NLL loss, the optimal leaf distribution is the empirical distribution \(p_T(k)\),
+  giving an entropy-based node loss
+  \[
+    c_T \equiv c_{\mathrm{entropy}}(T) = -|I_T|\sum_{k:\,p_T(k)\neq 0} p_T(k)\log p_T(k),
+  \]
+  and a commonly used alternative impurity is the Gini criterion
+  \[
+    c_T \equiv c_{\mathrm{Gini}}(T)=|I_T|\sum_k p_T(k)\bigl(1-p_T(k)\bigr).
+  \]
+\end{itemize}
+In all cases, the split decision is greedy and is driven by minimizing \(c_{T_L}+c_{T_R}-c_T\), which is directly derived from the underlying loss being minimized.
+
+\section{Q9.7 In a binary classification decision tree, state what values are kept in internal nodes, define the Gini index and describe how is a node split during training (without discussing splitting constraints). [10]}
+Assume training data \(X \in \mathbb{R}^{N\times D}\) and binary targets \(t_i \in \{0,1\}\).
+For any node \(T\), let \(I_T\) be the set of training-example indices belonging to \(T\).
+
+\paragraph{What is stored in internal nodes.}
+Each internal node stores a \emph{split}: a chosen feature (dimension) \(d \in \{1,\dots,D\}\) and a split value \(s\),
+which routes an example \(i\in I_T\) to
+\[
+T_L:\ x_{i,d} \le s
+\qquad\text{or}\qquad
+T_R:\ x_{i,d} > s,
+\]
+(i.e., the node stores \((d,s)\) and pointers to the children \(T_L,T_R\)).
+
+\paragraph{Class distribution in a node.}
+Let \(n_T(0)\) and \(n_T(1)\) be the counts of labels \(0\) and \(1\) in \(T\), and define the empirical class probabilities
+\[
+p_T(k) = \frac{n_T(k)}{|I_T|},\qquad k\in\{0,1\}.
+\]
+A leaf typically predicts the most frequent class in the leaf (equivalently \(\arg\max_k p_T(k)\)).
+
+\paragraph{Gini index (Gini impurity).}
+The Gini criterion for a node \(T\) is
+\[
+c_{\mathrm{Gini}}(T) \;\stackrel{\mathrm{def}}{=}\; |I_T|\sum_{k\in\{0,1\}} p_T(k)\bigl(1-p_T(k)\bigr).
+\]
+For binary classification this simplifies to
+\[
+c_{\mathrm{Gini}}(T) = |I_T| \, p_T(1)\bigl(1-p_T(1)\bigr)
+\quad
+(\text{since }p_T(0)=1-p_T(1)).
+\]
+
+\paragraph{How a node is split during training.}
+To split a leaf node \(T\), CART tries candidate splits by looping over
+\begin{itemize}
+  \item feature \(d=1,\dots,D\),
+  \item split value \(s\) (typically all unique values of feature \(d\) among examples in \(I_T\)),
+\end{itemize}
+creating the child index sets
+\[
+I_{T_L}(d,s)=\{i\in I_T : x_{i,d}\le s\},\qquad
+I_{T_R}(d,s)=\{i\in I_T : x_{i,d}> s\}.
+\]
+For each candidate, compute the post-split criterion and its difference:
+\[
+c_{\mathrm{Gini}}(T_L)+c_{\mathrm{Gini}}(T_R)
+\qquad\text{or}\qquad
+\Delta(d,s)=c_{\mathrm{Gini}}(T_L)+c_{\mathrm{Gini}}(T_R)-c_{\mathrm{Gini}}(T).
+\]
+Choose \((d,s)\) that minimizes \(\Delta(d,s)\) (equivalently, decreases the criterion the most),
+store \((d,s)\) in \(T\), and create the two new leaves \(T_L,T_R\) with their own empirical probabilities \(p_{T_L}, p_{T_R}\).
+
+\section{Q9.8 In a $K$-class classification decision tree, state what values are kept in internal nodes, define the entropy criterion and describe how is a node split during training (without discussing splitting constraints). [10]}
+
+
+In a \( K \)-class classification decision tree, the internal nodes hold the decision rules, typically a feature and a threshold that partitions the dataset into subsets.
+
+The entropy criterion for a node \( T \), often used as a measure of impurity or disorder within the node, is defined as:
+
+\[
+C_{\text{entropy}}(T) = -|I_T| \sum_{\substack{k=1 \\ p_T(k) \neq 0}}^K p_T(k) \log p_T(k),
+\]
+
+where \( p_T(k) \) represents the proportion of class \( k \) instances within node \( T \), and \( |I_T| \) is the number of instances in node \( T \).
+
+The process of splitting a node during training involves:
+
+\begin{enumerate}
+    \item For each feature, calculate the potential splits and the resulting entropy.
+    \item The split that results in the largest decrease in entropy (highest information gain) is chosen.
+    \item This process is recursively applied to each new node until the stopping criteria are met.
+\end{enumerate}
+
+\section{Q9.9 For binary classification, derive the Gini index from a squared error loss. [20]}
+
+
+Consider a binary classification setting with a set of training examples belonging to a leaf node \( T \). Let \( n_T(0) \) denote the number of examples with target value 0, \( n_T(1) \) the number of examples with target value 1, and \( p_T \) the proportion of examples with target value 1 in \( T \), i.e., \( p_T = \frac{n_T(1)}{n_T(0) + n_T(1)} \).
+
+The squared error loss \( L(p) \) for a prediction \( p \) is defined as:
+\[
+L(p) = \sum_{i \in I_T} (p - t_i)^2,
+\]
+where \( t_i \) is the target value for the \( i \)-th example.
+
+Minimizing the squared error loss, we find that the optimal prediction \( p \) is the average target value in \( T \), i.e., \( p = p_T \). The loss for this prediction is:
+\[
+L(p_T) = \sum_{i \in I_T} (p_T - t_i)^2 = n_T(0)\textcolor{blue}{(p_T - 0)^2} + \textcolor{pink}{n_T(1)(p_T - 1)^2}.
+\]
+
+Expanding the terms, we get:
+\begin{equation}
+\begin{aligned}
+&= \frac{n_T(0)\textcolor{blue}{n_T(1)^2}}{\textcolor{blue}{(n_T(0) + n_T(1))^2}} + \frac{n_T(1)\textcolor{pink}{n_T(0)^2}}{\textcolor{pink}{(n_T(0) + n_T(1))^2}} \\
+&= \frac{{(n_T(1))} + {n_T(0))}\textcolor{green}{n_T(0)}\textcolor{red}{n_T(1)}}{\textcolor{green}{(n_T(0) + n_T(1))}\textcolor{red}{(n_T(0) + n_T(1))}}\\
+&= ({n_T(0) + n_T(1)})\textcolor{green}{(1 - {p_T})}\textcolor{red}{p_T} = |T| \cdot p_T(1 - {p_T}).
+\end{aligned}
+\end{equation}
+    
+which is proportional to the Gini impurity measure \( G(T) = 2p_T(1 - p_T) \) for a binary classification.
+
+\section{Q9.10 For $K$-class classification, derive the entropy criterion from a non-averaged NLL loss. [20]}
+
+Given a set of training examples \(I_T\) corresponding to a leaf node \(T\) in a decision tree for K-class classification, let \(n_T(k)\) denote the count of examples in \(T\) with target class \(k\). The probability of class \(k\) in \(T\) is given by \(p_T(k) = \frac{n_T(k)}{|I_T|}\).
+
+The non-averaged negative log-likelihood loss for a distribution \(p\) over \(K\) classes is defined as:
+\[
+L(p) = \sum_{i \in I_T} -\log p_{t_i},
+\]
+where \(p_{t_i}\) is the predicted probability of the true class \(t_i\) for the \(i\)-th example.
+
+To minimize the NLL loss, we take its derivative with respect to \(p_k\) and set it to zero, subject to the constraint \(\sum_k p_k = 1\). This yields the minimizing condition \(p_k = p_T(k)\).
+
+The value of the loss with respect to \(p_T\) then simplifies to:
+\[
+L(p_T) = \sum_{i \in I_T} -\log p_{t_i} = -\sum_{k: p_T(k) \neq 0} n_T(k) \log p_T(k).
+\]
+
+Using the definition of entropy \(H(p_T)\) for the distribution \(p_T\), we have:
+\[
+H(p_T) = -\sum_{k: p_T(k) \neq 0} p_T(k) \log p_T(k),
+\]
+which implies that the NLL loss is equal to the size of \(I_T\) times the entropy of \(p_T\):
+\[
+L(p_T) = |I_T| \cdot H(p_T).
+\]
+
+This concludes the derivation, showing that minimizing the non-averaged NLL loss is equivalent to minimizing the entropy of the predicted class distribution within a leaf node of a decision tree.
+
+\section{Q9.11 Describe how is a random forest trained (including bagging and a random subset of features) and how is prediction performed for regression and classification. [10]}
+
+A random forest is an ensemble learning method that operates by constructing a multitude of decision trees during training and outputting the class that is the mode of the classes (classification) or mean prediction (regression) of the individual trees.
+
+\subsection*{Training}
+
+The training process involves the following steps:
+
+\begin{enumerate}
+  \item \textbf{Bootstrap Aggregating (Bagging):} For each tree, a bootstrap sample is drawn from the training data. This means that for a training set of size \( N \), \( M \) samples are drawn with replacement to form a training set for the tree.
+  
+  \item \textbf{Random Feature Selection:} When splitting nodes during the construction of the trees, instead of searching for the best split among all features, a random subset of features is selected, and the best split is found within this subset. This introduces diversity among the trees and is key to the success of random forests.
+  
+  \item \textbf{Tree Construction:} Decision trees are constructed to the maximum depth without pruning. Each tree is grown on a different bootstrap sample of the data, and at each node, a different random subset of features is considered for splitting.
+  
+  \item \textbf{Ensemble Creation:} Steps 1 to 3 are repeated to create a forest of decision trees, typically ranging from tens to hundreds of trees.
+\end{enumerate}
+
+\subsection*{Prediction}
+
+For prediction, the responses from all trees in the forest are aggregated:
+
+\begin{itemize}
+  \item \textbf{Regression:} The final prediction is the average of the predictions from all individual trees.
+  
+  \item \textbf{Classification:} Each tree gives a vote for the class, and the class receiving the majority of votes becomes the model's prediction. In the case of a tie, one class may be randomly selected, or the tie may be broken based on the class distributions.
+\end{itemize}
+
+The random forest algorithm leverages the power of multiple decision trees to reduce variance and avoid overfitting, providing robust predictions for both regression and classification tasks.

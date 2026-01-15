@@ -1,0 +1,254 @@
+\part{Lecture 6}
+
+\section{Q6.1 Explain how is the TF-IDF weight of a given document-term pair computed. [5]}
+
+The TF-IDF weight of a document-term pair is given by:
+
+\[
+\text{TF-IDF}(t,d) = \text{TF}(t,d) \times \text{IDF}(t,D)
+\]
+
+where:
+\begin{itemize}
+  \item \( \text{TF}(t,d) \) is the term frequency, defined as the number of times term \( t \) appears in document \( d \), normalized or not.
+  \item \( \text{IDF}(t,D) \) is the inverse document frequency, calculated as:
+
+  \[
+  \text{IDF}(t,D) = \log \frac{N}{|\{d \in D : t \in d\}| (optionaly + 1))}
+  \]
+
+  In this formula, \( N \) is the total number of documents in the corpus \( D \), and \( |\{d \in D : t \in d\}| \) is the number of documents where the term \( t \) appears (i.e., \( \text{df}_t \), the document frequency of \( t \)).
+\end{itemize}
+
+The TF-IDF score increases with the number of times a word appears in the document but is offset by the frequency of the word in the corpus, which helps to adjust for the fact that some words appear more frequently in general.
+
+\section{Q6.2 What is Zipf's law? Explain how it can be used to provide intuitive justification for using the logarithm when computing IDF. [5]}
+Zipf's Law is an empirical rule that suggests that in many natural language datasets, the frequency of a word is inversely proportional to its rank in a frequency table. In simpler terms, a few words are very frequent, and many words are very rare. This means that the most frequent word in a text will appear approximately twice as often as the second most frequent word, three times as often as the third most frequent word, and so on.
+
+Mathematically, Zipf's Law can be expressed as: $f(r) \propto \frac{1}{r^s}$, where $f(r)$ is the frequency of the word ranked $r$, $r$ is the rank of the word, $s$ is a parameter close to 1 (often approximated as 1 for natural language).
+
+If Zipf's law holds, we can use it to justify the use of the logarithm when computing the IDF. The intuition is that the frequency of a word is inversely proportional to its rank, which means that the IDF should increase logarithmically with the rank of the word. This is because the logarithm is the inverse function of the exponential, and it helps to compress the range of values, making the IDF more manageable and interpretable. By taking the logarithm of the IDF, we can ensure that the IDF values are not skewed by the extreme frequency differences between words, aligning with the observed distribution of word frequencies in natural language datasets.
+
+\section{Q6.3 Define conditional entropy, mutual information, write down the relation between them, and finally prove that mutual information is zero if and only if the two random variables are independent (you do not need to prove statements about $D_{KL}$). [10]}
+
+Conditional entropy $H(Y|X)$ quantifies the expected value of the entropy of $Y$ given that the value of $X$ is known. It is defined as:
+
+\[
+H(Y|X) = -\sum_{x \in X, y \in Y} P(x, y) \log P(y|x).
+\]
+
+Mutual information $I(X; Y)$ measures the amount of information that one random variable contains about another random variable. It is defined as:
+
+\[
+I(X; Y) = \sum_{x \in X, y \in Y} P(x, y) \log \frac{P(x, y)}{P(x)P(y)}.
+\]
+
+The relationship between conditional entropy and mutual information can be expressed as:
+
+\[
+I(X; Y) = H(Y) - H(Y|X).
+\]
+
+This equation implies that mutual information is the reduction in uncertainty about $Y$ due to the knowledge of $X$.
+
+The mutual information is symmetrical, so
+\[
+I(X; Y) = I(Y; X) = H(X) - H(X|Y) = H(Y) - H(Y|X).
+\]
+
+Therefore
+\[
+    I(X;Y) = D_{KL}(P(X,Y)||P(X)P(Y))
+\]
+
+\paragraph{Proof that $I(X;Y)=0 \iff X \perp Y$.}
+Using the definition,
+\[
+I(X;Y)=\sum_{x,y} P(x,y)\log\frac{P(x,y)}{P(x)P(y)}.
+\]
+Observe that this is exactly the KL-divergence between the joint distribution and the product
+of marginals:
+\[
+I(X;Y)=D_{KL}\!\big(P(X,Y)\,\|\,P(X)P(Y)\big).
+\]
+Now use the standard property of KL-divergence (no proof required here):
+\[
+D_{KL}(P\|Q)\ge 0 \quad\text{and}\quad D_{KL}(P\|Q)=0 \iff P=Q.
+\]
+Therefore,
+\[
+I(X;Y)=0 \iff P(X,Y)=P(X)P(Y).
+\]
+But \(P(X,Y)=P(X)P(Y)\) is precisely the definition of independence of \(X\) and \(Y\).
+Hence, \(I(X;Y)=0\) if and only if \(X\) and \(Y\) are independent.
+
+\section{Q6.4 Show that TF-IDF terms can be considered portions of suitable mutual information. [10]}
+
+Let $\mathcal{D}$ be a collection of documents and $\mathcal{T}$ a collection of terms. We can express the mutual information between a document $d$ and a term $t$ using their probabilities and the TF-IDF measure.
+
+\begin{itemize}
+  \item The probability of selecting a document $d$ uniformly at random from $\mathcal{D}$ is $P(d) = \frac{1}{|\mathcal{D}|}$.
+  \item The information content of a document $I(d) = H(\mathcal{D}) = \log |\mathcal{D}|$.
+  \item The probability of a term $t$ occurring in a document $d$ is $P(t|d) = \frac{|\{d \in \mathcal{D} : t \in d\}|}{|\mathcal{D}|}$.
+  \item The information content of a term $t$ in a document $d$ is $I(t|d) = \log |\{d \in \mathcal{D} : t \in d\}|$.
+  \item The difference in information content of a document with and without a term is the IDF: $I(d) - I(t|d) = \log |\mathcal{D}| - \log |\{d \in \mathcal{D} : t \in d\}| = \text{IDF}(t)$.
+\end{itemize}
+
+The mutual information $I(\mathcal{D}; \mathcal{T})$ is calculated as:
+
+\[
+I(\mathcal{D}; \mathcal{T}) = \sum_{d, t \in d} P(d) \cdot P(t|d) \cdot (I(d) - I(t|d)).
+\]
+
+Given the definitions of TF and IDF, we can write:
+
+\[
+I(\mathcal{D}; \mathcal{T}) = \frac{1}{|\mathcal{D}|} \sum_{d, t \in d} \text{TF}(t, d) \cdot \text{IDF}(t).
+\]
+
+Thus, we can interpret the TF-IDF weight as a portion of the mutual information between the collection of documents $\mathcal{D}$ and the collection of terms $\mathcal{T}$, where each TF-IDF value corresponds to a "bit of information" for a document-term pair.
+
+\section{Q6.5 Explain the concept of word embedding in the context of MLP and how it relates to representation learning. [5]}
+
+Word embedding is a technique in representation learning where words from a vocabulary are associated with vectors of real numbers, effectively capturing their semantic meanings in a continuous vector space. Semantically similar words are positioned closely in this space. 
+
+In the realm of Multilayer Perceptrons (MLPs), these embeddings serve as the input layer. Each word is represented by a unique, learnable vector, rather than a high-dimensional, sparse one-hot vector. Throughout the training phase, the MLP fine-tunes these embeddings via backpropagation, based on the context in which words appear.
+
+This approach is a key part of representation learning because it enables MLPs to internalize language subtleties directly from data, surpassing the need for manual feature engineering. It allows the network to capture complex syntactic and semantic word relationships, enhancing its performance on Natural Language Processing (NLP) tasks such as sentiment analysis, translation, and text categorization.
+
+Word embeddings are the cornerstone of modern NLP models and are integrated into more advanced neural architectures like Recurrent Neural Networks (RNNs), Long Short-Term Memory networks (LSTMs), and Transformers, driving forward the state-of-the-art in various NLP applications.
+
+
+\section{Q6.6 Describe the skip-gram model trained using negative sampling. What is it used for? What are the input and output of the algorithm? Use an equation to describe the loss function. [10]}
+
+The skip-gram model aims to learn word embeddings that predict the context words given a target word. For a given word in the vocabulary, the model outputs a probability distribution over all words to be the 'context' words.
+
+The Skip-gram model with negative sampling (SGNS) enhances training efficiency by altering the objective function. Instead of predicting the presence of context words among all words in the vocabulary, SGNS focuses on distinguishing the actual context words from a number of randomly sampled 'negative' words.
+
+\paragraph{What it is used for.}
+Skip-gram with negative sampling (Word2Vec) is a proxy task for \emph{learning word embeddings}:
+it learns vector representations in which words that occur in similar contexts have similar vectors,
+so the embeddings can be reused as features in downstream NLP tasks.
+
+\paragraph{Model idea (skip-gram).}
+Given a \emph{center} (input) word $w$ in a sentence, the model tries to predict words in its
+context window $c$.
+It uses two embedding tables:
+\[
+E \in \mathbb{R}^{|V|\times d} \quad (\text{input embeddings } e_w), 
+\qquad
+W \in \mathbb{R}^{|V|\times d} \quad (\text{output embeddings } v_c).
+\]
+Instead of an expensive softmax over the whole vocabulary, negative sampling turns training
+into binary classification of word pairs $(w,c)$.
+
+\paragraph{Input and output.}
+\begin{itemize}
+  \item \textbf{Input:} a center word $w$ (typically as an index / one-hot; embedding lookup gives $e_w$).
+  \item \textbf{Output during training:} for a given candidate context word $c$, a probability that
+  $(w,c)$ is a \emph{real} co-occurrence:
+  \[
+  P(\text{real}=1 \mid w,c) = \sigma(e_w^\top v_c).
+  \]
+  \item \textbf{Output after training:} the learned word embeddings (typically the rows of $E$; in Word2Vec the output table is usually discarded).
+\end{itemize}
+
+\paragraph{Negative sampling training objective.}
+For each observed positive pair $(w,c_i)$ (where $c_i$ is in the context window of $w$),
+sample $K$ negative words $c_1,\dots,c_K$ that are \emph{not} in the window.
+The per-example loss is
+\[
+\mathcal{L}(w,c_i,\{c_j\}_{j=1}^K)
+= -\log \sigma(e_w^\top v_{c_i})
+  -\sum_{j=1}^{K}\log\!\bigl(1-\sigma(e_w^\top v_{c_j})\bigr),
+\]
+(equivalently, the second term can be written as $-\sum_{j=1}^K \log \sigma(-e_w^\top v_{c_j})$).
+Typical values are small $K$ (e.g.\ $K\approx 5$) for efficiency.
+
+\paragraph{Example (what skip-gram predicts).}
+Consider the sentence: \emph{``the cat sat on the mat''} and a context window of size $2$.
+If the center word is $w=\texttt{sat}$, then the true context words might be
+\[
+c^+ \in \{\texttt{cat},\ \texttt{on}\}\quad(\text{and with a larger window also }\texttt{the},\texttt{the}).
+\]
+Skip-gram constructs positive training pairs such as
+\[
+(\texttt{sat},\texttt{cat}),\ (\texttt{sat},\texttt{on}).
+\]
+
+\paragraph{Example (negative sampling).}
+For the positive pair $(w,c^+)=(\texttt{sat},\texttt{cat})$, sample $K$ negative words from a noise distribution
+(e.g.\ unigram$^{3/4}$), for instance with $K=3$:
+\[
+\{c^-_1,c^-_2,c^-_3\}=\{\texttt{banana},\ \texttt{river},\ \texttt{green}\}.
+\]
+The model then solves $K\!+\!1$ binary classification subproblems:
+\[
+\sigma(e_{\texttt{sat}}^\top v_{\texttt{cat}})\ \text{should be close to }1,
+\qquad
+\sigma(e_{\texttt{sat}}^\top v_{\texttt{banana}}),\ \sigma(e_{\texttt{sat}}^\top v_{\texttt{river}}),\ \sigma(e_{\texttt{sat}}^\top v_{\texttt{green}})
+\ \text{should be close to }0.
+\]
+So a single update increases the dot product for the positive pair and decreases it for the sampled negatives.
+
+\paragraph{What exactly are the inputs/outputs in this example?}
+\begin{itemize}
+  \item \textbf{Input to the algorithm (data):} a corpus of tokenized sentences (and chosen window size, $K$, and a negative-sampling distribution).
+  \item \textbf{Input to one training step:} a center word index $w=\texttt{sat}$, one positive context word $c^+=\texttt{cat}$, and $K$ sampled negatives $\{c^-_j\}$.
+  \item \textbf{Output of one training step:} probabilities
+  \[
+  p^+ = \sigma(e_w^\top v_{c^+}),\qquad p^-_j=\sigma(e_w^\top v_{c^-_j}),
+  \]
+  and a scalar loss value used for backpropagation.
+  \item \textbf{Final output after training:} the learned embedding matrix $E$ (word vectors for all vocabulary items; often $W$ is not kept).
+\end{itemize}
+
+\section{Q6.7 Explain why the skip-gram model uses negative sampling instead of softmax. [5]}
+Skip-gram with softmax requires computing
+\[
+p(c\mid w)=\frac{\exp(\mathbf e_w^\top \mathbf v_c)}{\sum_{c'\in V}\exp(\mathbf e_w^\top \mathbf v_{c'})},
+\]
+so every update needs the normalization sum over the whole vocabulary $V$.
+Since $|V|$ can be very large (e.g.\ $10^5$--$10^6$ word forms), this is computationally expensive.
+
+Negative sampling avoids the full softmax by turning the problem into \emph{binary classification} of word pairs:
+given a target word $w$ and a candidate context word $c$, we model their co-occurrence probability
+independently as logistic regression
+\[
+P(c\mid w) \approx \sigma(\mathbf e_w^\top \mathbf v_c).
+\]
+For each observed (positive) pair $(w,c)$ we sample $K$ ``negative'' context words $c_1,\dots,c_K$
+that are not in the window, and optimize the (per-pair) loss
+\[
+L = -\log \sigma(\mathbf e_w^\top \mathbf v_c)\;-\;\sum_{j=1}^{K}\log\!\bigl(1-\sigma(\mathbf e_w^\top \mathbf v_{c_j})\bigr).
+\]
+This reduces the cost of one update from $\mathcal O(|V|)$ (softmax) to $\mathcal O(K)$ with $K\ll |V|$
+(typically $K\approx 5$), making training feasible on large corpora.
+
+\section{Q6.8 How would you proceed to train a part-of-speech tagger (i.e., you want to assign each word with its part of speech) if you only could use pre-trained word embeddings and MLP classifier? [5]}
+\paragraph{What we are doing (POS tagging).}
+\emph{Part-of-speech (POS) tagging} means: for every word in a sentence, we assign a grammatical label such as
+\texttt{NOUN}, \texttt{VERB}, \texttt{ADJ}, \texttt{ADV}, \texttt{PRON}, etc.
+Example:
+\[
+\text{``I/PRON can/VERB fish/VERB''} \quad \text{vs.} \quad \text{``a/DET can/NOUN''}
+\]
+The correct tag often depends on the \emph{context} (neighboring words).
+
+\begin{itemize}
+  \item \textbf{Use labeled data:} take sentences where each word already has a gold POS tag.
+
+  \item \textbf{Convert words to vectors:} for each word \(w_t\), look up its \emph{pre-trained} embedding vector \(e_t\).
+  Keep these embeddings \emph{fixed} (do not update them).
+
+  \item \textbf{Add context (important for POS):} build an input vector from a small window of embeddings:
+  \[
+  x_t = [e_{t-1}; e_t; e_{t+1}]
+  \]
+  (or use a larger window; use a special \texttt{PAD} vector at sentence boundaries).
+
+  \item \textbf{Train an MLP classifier:} feed \(x_t\) into an MLP and use a final softmax to predict the POS tag of the center word.
+  Train only the MLP parameters using cross-entropy over all tokens.
+
+  \item \textbf{Predict:} at test time, do the same embedding lookup + window, run the MLP, and output the most likely tag.
+\end{itemize}

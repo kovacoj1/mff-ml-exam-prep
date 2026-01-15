@@ -1,0 +1,63 @@
+\part{Lecture 13}
+
+\section{Q13.1 Describe how deontological and utilitarian visual representation can be applied to various stages of the ML pipeline. [5]}
+
+In ML ethics, \textbf{deontological frameworks} might lead to ethical problems in:
+\begin{itemize}
+    \item Problem definition: Some tasks may not align with fundamental ethical principles.
+    \item Data collection: Issues like privacy invasion or non-consensual data usage.
+    \item Model development: Ensuring models do not discriminate or violate user autonomy.
+\end{itemize}
+
+\textbf{Utilitarian frameworks} in ML ethics might consider:
+\begin{itemize}
+    \item Model evaluation: Metrics should account for overall happiness or harm reduction.
+    \item Model deployment: Using models in ways that maximize social good while minimizing potential harm or feedback loops that might disadvantage certain groups.
+\end{itemize}
+
+\textit{Examples:}
+\begin{itemize}
+    \item A deontological approach might reject any form of user data exploitation, even if it improves the performance of a recommendation system, on the principle of user autonomy.
+    \item A utilitarian approach may justify the use of personal data if the resulting system significantly benefits a large number of users, thereby increasing overall utility.
+\end{itemize}
+
+Both approaches have their merits and challenges when applied to ML ethics. Deontological ethics provide clear guidelines but can be rigid and may lead to conflicts between principles. Utilitarian ethics offer flexibility and quantifiability but may overlook individual rights and face difficulties in defining collective well-being.
+
+\section{Q13.2 List a few examples of potential ethical problems related to data collection. [5]}
+
+\begin{enumerate}
+    \item \textbf{Representation Bias}: Data may not be representative of the entire population, often excluding minorities or economically disadvantaged groups.
+    \item \textbf{Internet Data Misrepresentation}: Data collected from the internet might disproportionately represent the views and behaviors of those who have access and are more vocal online, skewing perceptions of the general population.
+    \item \textbf{Historical Bias}: Data reflecting past inequalities may perpetuate these biases when used to train modern machine learning systems.
+    \item \textbf{Exploitation in Crowdsourcing}: Individuals hired to collect or label data, often in low-income countries, may be underpaid and work under poor conditions, which could lead to monotonous work that causes psychological harm.
+    \item \textbf{Non-transparent Data Collection}: Users may unknowingly provide personal data when using online services, without a clear understanding or explicit consent of how their data will be used or the implications of its use.
+  \end{enumerate}
+  
+\section{Q13.3 List a few examples of potential ethical problems that can originate in model evaluation. [5]}
+
+
+\begin{enumerate}
+    \item \textbf{Incomplete Metrics:} Evaluation metrics may not fully capture the desired outcomes. For instance, while translation fluency metrics may seem adequate, they might overlook ingrained gender biases.
+    \item \textbf{Macro-averaging Oversights:} Using macro-averaging in evaluation can obscure poor performance for specific user groups, often minorities, thus perpetuating discrimination.
+    \item \textbf{Human Resource Algorithms:} Employment recommendation systems optimized for precision may inadvertently discriminate based on gender, age, ethnicity, etc., since the system's recall—indicating the full scope of candidates, including potentially overlooked qualified individuals—is not visible.
+    \item \textbf{Data Mismatch:} When training and testing data do not align, minority languages could be disproportionately classified as hate speech or not safe for work, as highlighted in the paper "The Risk of Racial Bias in Hate Speech Detection" (Sap et al., ACL 2019).
+    \item \textbf{Feedback Loops:} Recommender systems can create feedback loops where predictions influence user behavior, which then feeds back into the training data. This can lead to echo chambers and self-affirmative groups. A notable example is how YouTube's recommendation algorithms facilitated the discovery of a category of home videos of scantily clad children by pedophiles.
+  \end{enumerate}
+
+\section{Q13.4 List at least one example of an ethical problem that can originate in model design or model development. [5]}
+
+One ethical problem that can arise in model design or development is bias and discrimination in predictive models. For example, if a machine learning model is trained on biased historical data, it may perpetuate or even exacerbate existing inequalities. In hiring algorithms, if the training data reflects gender or racial biases, the model might unfairly favor certain demographic groups over others. This can lead to discriminatory practices, such as hiring or lending decisions that disadvantage certain groups, violating principles of fairness and equality. Ensuring fairness and mitigating bias in model design is crucial to avoid these ethical issues.
+
+\section{Q13.5 Under what circumstances could train-test mismatch be an ethical problem? [5]}
+
+Train-test mismatch can become an ethical problem when a model is trained on data that doesn't accurately represent the population it will be applied to, leading to unfair or harmful outcomes. For instance, if a model is trained on data from one demographic group (e.g., based on gender, age, or ethnicity) but then tested or deployed on a broader or different group, it may fail to generalize well, leading to biased predictions. This can result in unjust decisions, such as in healthcare or criminal justice, where individuals from underrepresented groups are unfairly treated or disadvantaged because the model doesn't account for their specific characteristics. In such cases, the mismatch between training and testing data can reinforce existing inequalities, causing harm to individuals who are misrepresented or overlooked by the model, and raising significant ethical concerns regarding fairness, accountability, and transparency.
+
+\section{Q13.6 Chose one ethical issue with deploying ML systems and describe it from deontological and utalitarian perspective. [5]}
+\paragraph{Ethical issue (deployment): \emph{Using ML risk scores for criminal sentencing (e.g., recidivism prediction / COMPAS).}}
+An ML system is deployed to estimate a defendant's risk of reoffending and this score influences judicial decisions. Such systems can be opaque and can exhibit disparate impact across protected groups.
+
+\paragraph{Deontological (rule-/rights-based) perspective.}
+From deontological ethics, the core question is whether the deployment violates duties and rights (e.g., fairness, non-discrimination, transparency, autonomy/informed consent). If the system is non-transparent and treats similar cases differently across ethnicities, it violates the right to a fair trial and equality before the law, so deploying it is morally wrong \emph{regardless} of any efficiency gains. 
+
+\paragraph{Utilitarian (consequence-based) perspective.}
+From utilitarianism, the decision depends on overall consequences: who is affected and how, and whether benefits outweigh harms. Even if the system saves time/money for the state, the aggregate harm from wrongful or biased outcomes (loss of justice, increased discrimination, societal distrust) can outweigh those benefits; therefore deployment is morally wrong if it decreases overall well-being or increases harm. 

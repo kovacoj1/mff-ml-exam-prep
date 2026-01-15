@@ -1,0 +1,302 @@
+\part{Lecture 12}
+
+\section{Q12.1 Write down the definitions of the null hypothesis and the alternative hypothesis. Visual representation should be provided. [5]}
+
+In statistical hypothesis testing, we start by defining two competing hypotheses:
+
+\begin{itemize}
+  \item \textbf{Null hypothesis (\(H_0\)):} A statement that there is no effect or no difference, often representing a baseline assumption.
+  \item \textbf{Alternative hypothesis (\(H_1\)):} A statement that contradicts the null hypothesis, proposing some effect or difference.
+\end{itemize}
+
+For example, if we are comparing two models, \(H_0\) might state that the performance of the two models is equal, while \(H_1\) might state that the performances differ.
+
+When setting up a hypothesis test, we compute a test statistic from our observed data, which follows a known sampling distribution under $H_0$. This distribution shows how the statistic would behave if $H_0$ were true. For instance, the figure below illustrates a standard normal sampling distribution under $H_0$. The shaded region marks the critical or rejection region---if the test statistic falls in this region, we reject $H_0$. In a one-tailed test, there's a single critical region (e.g., on the right side); in a two-tailed test, both extremes are critical regions, reflecting the possibility that effects can deviate in either direction.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.4\linewidth]{../images/hypothesis.png}
+  \caption{Null hypothesis example with Z-score on the x-axis.}
+  \label{fig:hypothesis}
+\end{figure}
+
+\section{Q12.2 Visual representation of: significance level, test statistic, rejection region, p-value. [5]}
+
+To formalize hypothesis testing, we compute a \textbf{test statistic} from the observed data. This statistic follows a known sampling distribution under $H_0$, as depicted in Figure \ref{fig:pvalue}.
+
+\begin{itemize}
+  \item \textbf{Test statistic:} A quantity computed from the data to assess how far the observation deviates from the null hypothesis. The arrow indicates the observed value on the distribution.
+  \item \textbf{Significance level (\(\alpha\)):} The probability threshold below which we reject the null hypothesis. Common values are 0.05 or 0.01.
+  \item \textbf{Rejection region:} The range of values for which we reject \(H_0\). Its size and position depend on $\alpha$ and whether the test is one-tailed or two-tailed.
+  \item \textbf{p-value:} The probability of observing a result at least as extreme as the test statistic, assuming $H_0$ is true. If $p$-value $\le \alpha$, we reject $H_0$.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\linewidth]{../images/pvalue.png}
+  \caption{Components of a hypothesis test: test statistic, rejection region (shaded), and p-value.}
+  \label{fig:pvalue}
+\end{figure}
+
+\section{Q12.3 Explain the Type I and Type II error and their visual representation. [5]}
+
+In statistical hypothesis testing, two types of errors can occur:
+
+\begin{itemize}
+  \item \textbf{Type I Error (False Positive):} We reject the null hypothesis when it is actually true.
+  \item \textbf{Type II Error (False Negative):} We fail to reject the null hypothesis when the alternative hypothesis is true.
+\end{itemize}
+
+These errors are inversely related: reducing Type I error typically increases Type II error and vice versa, with the balance influenced by $\alpha$ and the statistical power of the test.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{../images/error_types.png}
+  \caption{Type I and Type II errors illustrated on the distributions for $H_0$ and $H_1$.}
+  \label{fig:error_types}
+\end{figure}
+
+\section{Q12.4 Explain what statistical power is and how it relates to Type II error. [10]}
+
+\textbf{Statistical power} is the probability that a hypothesis test correctly rejects a false null hypothesis, i.e., the probability of correctly detecting an effect when it exists.
+
+$\text{Power} = 1 - \beta$
+
+where $\beta$ is the probability of a Type II error (failing to reject a false null hypothesis).
+
+$\beta = P(\text{fail to reject } H_0 \mid H_0 \text{ is false})$
+
+Key takeaway: Higher power means a lower chance of Type II errors, meaning we are less likely to miss a true effect.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{../images/power.png}
+  \caption{Power of a statistical test as related to Type I and Type II errors.}
+  \label{fig:power}
+\end{figure}
+
+Factors that influence statistical power:
+
+\begin{itemize}
+  \item \textbf{Effect Size:} Larger true effects are easier to detect.
+  \item \textbf{Sample Size:} More data reduces uncertainty and increases power.
+  \item \textbf{Significance Level ($\alpha$):} Increasing $\alpha$ makes it easier to reject $H_0$, increasing power but also increasing Type I error risk.
+  \item \textbf{Variance/Noise:} Lower variance in the data makes effects easier to detect.
+\end{itemize}
+
+\section{Q12.5 Explain the one-sample t-test: what are the visual representation, the assumptions, and the formula for the test statistic. [10]}
+
+The \textbf{one-sample t-test} assesses whether the mean of a single sample differs from a specified value $\mu_0$.
+
+The assumptions of the one-sample t-test include: independent and identically distributed (i.i.d.) samples, data drawn from an approximately normal distribution, and a finite and known variance.
+
+\textbf{Hypothesis Setup:}
+\begin{itemize}
+  \item $H_0: \mu = \mu_0$
+  \item $H_1: \mu \ne \mu_0$ (two-tailed), or $\mu > \mu_0$ / $\mu < \mu_0$ (one-tailed)
+\end{itemize}
+
+The test statistic is computed as:
+
+\[
+t = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}
+\]
+
+where $\bar{x}$ is the sample mean, $\mu_0$ is the hypothesized population mean, $s$ is the sample standard deviation, and $n$ is the sample size. Under $H_0$, $t$ follows a Student's $t$-distribution with $n - 1$ degrees of freedom.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\linewidth]{../images/1sample_ttest.png}
+  \caption{The $t$-distribution for the one-sample t-test.}
+  \label{fig:one-sample-t}
+\end{figure}
+
+\section{Q12.6 Explain the paired t-test: what are the visual representation, the assumptions, and the formula for the test statistic. [10]}
+
+The \textbf{paired t-test} is used to compare two related measurements---e.g., test performance of two models on the same dataset.
+
+\begin{itemize}
+  \item $H_0: \mu_d = 0$ (mean of differences is zero)
+  \item $H_1: \mu_d \ne 0$
+\end{itemize}
+
+Assumptions for paired t-test include: paired measurements (each pair related), i.i.d. pairs, the differences $d_i = x_{i,1} - x_{i,2}$ should follow an approximately normal distribution, and variance should be finite.
+
+\[
+t = \frac{\bar{d}}{s_d / \sqrt{n}}
+\]
+
+where $\bar{d}$ is the mean of the differences, $s_d$ is their standard deviation, and $n$ is the number of pairs. It follows a $t$-distribution with $n - 1$ degrees of freedom.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.65\linewidth]{../images/paired_ttest.png}
+  \caption{Difference histogram for the paired t-test.}
+  \label{fig:paired-t}
+\end{figure}
+
+\section{Q12.7 Explain the Pearson's Chi-squared test and McNemar's test: what are the visual representation, the assumptions, and the formula for the test statistic. [20]}
+
+\subsection*{Pearson's Chi-squared Test}
+Tests whether two categorical variables are independent, using a contingency table.
+
+$H_0$: The two variables are independent.
+
+$H_1$: There is a relationship between them.
+
+The formula for Pearson's Chi-squared test is: $\chi^2 = \sum \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$
+
+where $O_{ij}$ is the observed frequency in cell $(i, j)$ and $E_{ij}$ is the expected frequency under independence. Under $H_0$, $\chi^2 \sim \chi^2_{(r-1)(c-1)}$.
+
+\textbf{Assumptions:}
+\begin{itemize}
+  \item Independent observations.
+  \item Expected cell counts $\geq 5$ for large-sample approximation.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\linewidth]{../images/chisquared.png}
+  \caption{Contingency table and Chi-squared distribution.}
+  \label{fig:chi-squared}
+\end{figure}
+
+\subsection*{McNemar's Test}
+Tests whether two paired proportions differ (e.g., correct vs.\ incorrect predictions from two classifiers).
+
+$H_0$: $P(01) = P(10)$
+
+$H_1$: Proportions differ.
+
+For the contingency table:
+
+\[
+\begin{array}{|c|c|c|}
+\hline
+& \text{Model 2 correct} & \text{Model 2 incorrect} \\
+\hline
+\text{Model 1 correct} & n_{00} & n_{01} \\
+\hline
+\text{Model 1 incorrect} & n_{10} & n_{11} \\
+\hline
+\end{array}
+\]
+
+Only the off-diagonal counts matter; the test statistic is:
+
+$\chi^2 = \frac{(n_{01} - n_{10})^2}{n_{01} + n_{10}}$
+
+This follows a $\chi^2_1$ distribution under $H_0$.
+
+\textbf{Assumptions:}
+\begin{itemize}
+  \item Matched or paired samples.
+  \item Adequate sample size: typically $n_{01} + n_{10} \geq 25$.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\linewidth]{../images/mcnemar.png}
+  \caption{Structure of McNemar's test.}
+  \label{fig:mcnemar}
+\end{figure}
+
+\section{Q12.8 Explain the Wilcoxon Signed-Rank Test: what are the visual representation, the assumptions, and the formula for the test statistic. When would you use this test instead of a paired t-test? [20]}
+
+\subsection*{Wilcoxon Signed-Rank Test}
+A non-parametric alternative to the paired t-test when differences may not be normally distributed.
+
+$H_0$: The median difference is zero.
+
+$H_1$: The median difference is not zero.
+
+\begin{enumerate}
+  \item Compute differences $d_i = x_{i,1} - x_{i,2}$.
+  \item Discard zero differences.
+  \item Rank $|d_i|$ from smallest to largest.
+  \item Sum ranks of positive and negative differences separately.
+  \item Test statistic: $W = \min(W_+, W_-)$.
+\end{enumerate}
+
+\textbf{Assumptions:}
+\begin{itemize}
+  \item Paired and i.i.d.\ samples.
+  \item Differences come from a \emph{symmetric} distribution.
+  \item No normality assumption needed.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\linewidth]{../images/wilcoxon.png}
+  \caption{The Wilcoxon Signed-Rank test: computing ranks and sums.}
+  \label{fig:wilcoxon}
+\end{figure}
+
+\textbf{When to use Wilcoxon instead of paired t-test:}
+\begin{itemize}
+  \item When the distribution of differences is heavily skewed or non-normal.
+  \item When there are outliers that would distort a mean-based test.
+  \item When sample sizes are small and normality cannot be verified.
+\end{itemize}
+
+\section{Q12.9 Explain the multiple comparisons problem. What is the Bonferroni correction and the Holm-Bonferroni method? What are their main differences? [10]}
+
+\subsection*{Multiple Comparisons Problem}
+When performing multiple statistical tests simultaneously, the probability of making at least one Type I error (false positive) increases beyond the nominal significance level $\alpha$. If $m$ independent tests are conducted, each at significance level $\alpha$:
+
+\[ P(\text{at least one Type I error}) = 1 - (1 - \alpha)^m \]
+
+For example, with $m = 20$ tests at $\alpha = 0.05$:
+\[ P(\text{at least one Type I error}) \approx 0.64 \]
+
+This necessitates controlling the family-wise error rate (FWER), i.e., the probability of making one or more false discoveries.
+
+\subsection*{Bonferroni Correction}
+A simple and conservative approach that adjusts the significance level:
+
+\textbf{Method:} Test each hypothesis at significance level $\alpha' = \frac{\alpha}{m}$.
+
+\textbf{Equivalently:} Reject $H_0^{(i)}$ if $p_i \leq \frac{\alpha}{m}$.
+
+\textbf{Properties:}
+\begin{itemize}
+  \item Controls FWER at level $\leq \alpha$.
+  \item Very conservative, leading to reduced statistical power.
+\end{itemize}
+
+\subsection*{Holm-Bonferroni Method}
+A step-down procedure that is uniformly more powerful than Bonferroni while still controlling FWER.
+
+\textbf{Method:}
+\begin{enumerate}
+  \item Order p-values: $p_{(1)} \leq p_{(2)} \leq \ldots \leq p_{(m)}$.
+  \item Starting from the smallest p-value, reject $H_0^{(i)}$ if $p_{(i)} \leq \frac{\alpha}{m - i + 1}$.
+  \item Stop at the first non-rejected hypothesis; keep all subsequent hypotheses as not rejected.
+\end{enumerate}
+
+\textbf{Properties:}
+\begin{itemize}
+  \item Controls FWER at level $\leq \alpha$.
+  \item Less conservative than Bonferroni.
+  \item Uniformly more powerful (rejects at least as many hypotheses).
+\end{itemize}
+
+\subsection*{Comparison}
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Aspect} & \textbf{Bonferroni} & \textbf{Holm-Bonferroni} \\
+\hline
+Threshold & Fixed $\frac{\alpha}{m}$ & Adaptive $\frac{\alpha}{m - i + 1}$ \\
+\hline
+Power & Lower & Higher \\
+\hline
+Procedure & Single-step & Step-down \\
+\hline
+Conservativeness & More conservative & Less conservative \\
+\hline
+FWER control & Yes & Yes \\
+\hline
+\end{tabular}
+\end{center}
